@@ -590,6 +590,12 @@ body {
 .sync-row { display: flex; align-items: center; justify-content: space-between; font-size: 14px; font-weight: 700; margin-bottom: 8px; }
 .sync-status { font-size: 12px; color: var(--text-light); margin: 8px 0; }
 .sync-status:empty { display: none; }
+.pair-box { margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--line); }
+.pair-label { font-size: 12px; font-weight: 800; color: var(--text); margin-bottom: 6px; }
+.pair-code-row { display: flex; align-items: center; gap: 8px; }
+.pair-code-row .input { flex: 1; min-width: 0; }
+.pair-code { flex: 1; min-width: 0; font-size: 12.5px; font-weight: 800; color: var(--pink); background: var(--pink-bg); border: 1px solid var(--line); border-radius: var(--radius-xs); padding: 8px 10px; word-break: break-all; letter-spacing: .5px; }
+.pair-hint { font-size: 11px; color: var(--text-light); margin-top: 8px; line-height: 1.6; }
 .style-row { display: flex; gap: 8px; flex-wrap: wrap; }
 .style-chip { border: 2px solid transparent; background: var(--cream); border-radius: 20px; padding: 7px 14px; font-size: 13px; font-weight: 800; cursor: pointer; transition: all .2s; }
 .style-chip.active { border-color: var(--pink); background: var(--pink-soft); }
@@ -874,6 +880,28 @@ body {
       <input class="input" id="sync-url" placeholder="同步服务器地址，如 https://your-host/api" />
       <div class="sync-status" id="sync-status">未同步</div>
       <button class="btn btn-primary btn-sm" id="sync-now">立即同步</button>
+      <div class="pair-box">
+        <div class="pair-label">🔑 我的同步码（在其它设备粘贴此码即可共享数据）</div>
+        <div class="pair-code-row">
+          <code class="pair-code" id="my-sid">—</code>
+          <button class="btn btn-ghost btn-sm" id="sid-copy">复制</button>
+        </div>
+        <div class="pair-label" style="margin-top:10px;">📥 绑定对方同步码</div>
+        <div class="pair-code-row">
+          <input class="input" id="pair-input" placeholder="粘贴对方的同步码" />
+          <button class="btn btn-primary btn-sm" id="pair-bind">绑定</button>
+        </div>
+        <div class="pair-hint">绑定后会拉取对方的数据并保持实时一致，请确保两端填的是同一服务器地址。</div>
+      </div>
+    </div>
+    <div class="sheet-section">
+      <div class="sheet-sub">💾 数据备份（不依赖服务器）</div>
+      <div class="pair-code-row">
+        <button class="btn btn-ghost btn-sm" id="data-export">⬇️ 导出数据</button>
+        <button class="btn btn-ghost btn-sm" id="data-import-btn">⬆️ 导入数据</button>
+        <input type="file" id="data-import-file" accept="application/json,.json" style="display:none;" />
+      </div>
+      <div class="pair-hint">导出为 JSON 文件保存；换设备时导入即可完整恢复所有记录。</div>
     </div>
     <button class="btn btn-ghost" id="settings-close">关闭</button>
   </div>
@@ -1585,7 +1613,77 @@ function renderSyncSettings() {
   const s = getSync();
   const on = document.getElementById('sync-on'); if (on) on.checked = !!s.enabled;
   const url = document.getElementById('sync-url'); if (url) url.value = s.url || '';
+  if (!s.sid) { s.sid = uid(); setSync(s); }
+  const sidEl = document.getElementById('my-sid'); if (sidEl) sidEl.textContent = s.sid || '—';
   updateSyncStatus(s.last ? ('上次同步：' + new Date(s.last).toLocaleString()) : '未同步');
+}
+// 复制文本兜底：clipboard 不可用时（非 https / 无头环境）用 execCommand 兜底
+function fallbackCopy(text) {
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    document.execCommand('copy'); ta.remove();
+  } catch (e) { /* 兜底失败则忽略 */ }
+}
+// 剪贴板兜底（非 https / 旧浏览器无 navigator.clipboard 时）
+function fallbackCopy(text) {
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); ta.remove();
+  } catch (e) { /* 忽略 */ }
+}
+// 绑定对方同步码：设为同一 sid，rev 归零后立即拉取，实现多端无断层
+async function bindPairCode(code) {
+  code = (code || '').trim();
+  if (!code) { toast('请粘贴对方的同步码'); return; }
+  const s = getSync();
+  if (!s.url) { toast('请先填写同步服务器地址'); return; }
+  if (code === s.sid) { toast('这就是本机同步码，无需绑定'); return; }
+  s.sid = code; s.rev = 0; s.enabled = true; setSync(s);
+  const on = document.getElementById('sync-on'); if (on) on.checked = true;
+  const sidEl = document.getElementById('my-sid'); if (sidEl) sidEl.textContent = code;
+  updateSyncStatus('绑定中，正在拉取对方数据…');
+  await pullSync(true);
+  updateSyncStatus('已绑定同步码，数据已同步 ' + new Date().toLocaleTimeString());
+  toast('🔗 已绑定，正在多端同步');
+  if (RENDERERS[currentPage]) RENDERERS[currentPage]();
+}
+// 数据导出：打包全部 LS 业务数据为 JSON 下载
+function exportData() {
+  const data = {};
+  Object.values(LS).forEach(k => { if (k === LS.sync) return; const v = lsGet(k, null); if (v !== null) data[k] = v; });
+  const payload = { app: 'mimi-daily', version: 1, exported_at: new Date().toISOString(), data };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'mimi-daily-backup-' + localToday() + '.json';
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  toast('⬇️ 已导出备份文件');
+}
+// 数据导入：读取 JSON 写回 LS，重渲染并推送同步
+function importData(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const parsed = JSON.parse(reader.result);
+      const data = parsed && parsed.data ? parsed.data : parsed;
+      if (!data || typeof data !== 'object') { toast('文件格式不正确'); return; }
+      if (!confirm('导入将覆盖本机现有数据，确定继续？')) return;
+      const valid = Object.values(LS);
+      let n = 0;
+      Object.keys(data).forEach(k => { if (valid.includes(k) && k !== LS.sync) { lsSet(k, data[k]); n++; } });
+      toast('⬆️ 已导入 ' + n + ' 类数据');
+      if (RENDERERS[currentPage]) RENDERERS[currentPage]();
+      buildNav();
+      const s = getSync(); if (s.enabled && s.url) pushSync();
+    } catch (e) { toast('导入失败：' + (e.message || '无法解析文件')); }
+  };
+  reader.readAsText(file);
 }
 // 包裹 lsSet：业务数据写入触发防抖同步；同步元数据本身不触发，避免死循环
 let _suppressPush = false;
@@ -1701,6 +1799,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const s = getSync(); if (!s.url) { toast('请先填写同步服务器地址'); return; }
     if (!s.sid) s.sid = uid(); setSync(s); pushSync();
   });
+  // 同步配对码：复制本机码 / 绑定对方码
+  document.getElementById('sid-copy').addEventListener('click', () => {
+    const sid = getSync().sid || '';
+    if (!sid) { toast('暂无同步码'); return; }
+    const done = () => toast('📋 已复制同步码');
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(sid).then(done).catch(() => { fallbackCopy(sid); done(); });
+    else { fallbackCopy(sid); done(); }
+  });
+  document.getElementById('pair-bind').addEventListener('click', () => bindPairCode(document.getElementById('pair-input').value));
+  // 数据导出 / 导入
+  document.getElementById('data-export').addEventListener('click', exportData);
+  document.getElementById('data-import-btn').addEventListener('click', () => document.getElementById('data-import-file').click());
+  document.getElementById('data-import-file').addEventListener('change', (e) => { importData(e.target.files[0]); e.target.value = ''; });
   initSync();
   // 主题色随之更新 meta theme-color
   const applyMeta = () => {
