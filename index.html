@@ -6,8 +6,9 @@
   <title>💛 米米 Daily</title>
   <meta name="theme-color" content="#FFF9EF">
   <script>
-    // 在 CSS 加载前恢复主题，避免闪烁
-    (function(){var t=localStorage.getItem('mimi-theme');if(t&&t!=='default')document.documentElement.setAttribute('data-theme',t);})();
+    // 在 CSS 加载前恢复主题与风格，避免闪烁
+    (function(){var t=localStorage.getItem('mimi-theme');if(t&&t!=='default')document.documentElement.setAttribute('data-theme',t);
+    var s=localStorage.getItem('mm_style');if(s&&s!=='default')document.documentElement.setAttribute('data-style',s);})();
   </script>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -91,6 +92,61 @@
 [data-theme="butter"] { --cream: #FFFBEF; --pink: #E8C95A; --pink-soft: #F3EAC0; --pink-bg: #FBF6DC; --line: #EDE8C8; --shadow: 0 8px 30px rgba(232,201,90,.16); --shadow-hover: 0 14px 40px rgba(232,201,90,.26); }
 [data-theme="milktea"] { --cream: #FBF6EF; --pink: #C9A87C; --pink-soft: #ECE0CE; --pink-bg: #F5EDE2; --line: #EAE0D2; --shadow: 0 8px 30px rgba(201,168,124,.16); --shadow-hover: 0 14px 40px rgba(201,168,124,.26); }
 [data-theme="lilac"] { --cream: #F7F3FC; --pink: #C9A8E0; --pink-soft: #E6DCF0; --pink-bg: #F2ECF8; --line: #E6DCEF; --shadow: 0 8px 30px rgba(201,168,224,.16); --shadow-hover: 0 14px 40px rgba(201,168,224,.26); }
+
+/* ── 皮肤「风格」维度（与颜色主题正交，通过 data-style 切换）── */
+/* 简约：直角克制、弱阴影、细线条、去装饰 */
+[data-style="minimal"] {
+  --radius: 12px; --radius-sm: 9px; --radius-xs: 7px;
+  --shadow: 0 2px 10px rgba(0,0,0,.05); --shadow-hover: 0 4px 16px rgba(0,0,0,.08); --shadow-sm: 0 1px 6px rgba(0,0,0,.04);
+  --transition: .2s ease; --transition-smooth: .25s ease;
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+}
+[data-style="minimal"] .bg-decor::before,
+[data-style="minimal"] .bg-decor::after { opacity: .22; }
+[data-style="minimal"] #skin-pattern { opacity: 0 !important; }
+[data-style="minimal"] .page-card { border: 1px solid var(--line); }
+
+/* 可爱：超圆润、弹跳过渡、彩色阴影、圆体字 */
+[data-style="cute"] {
+  --radius: 30px; --radius-sm: 22px; --radius-xs: 16px;
+  --shadow: 0 12px 34px rgba(232,180,184,.28); --shadow-hover: 0 18px 48px rgba(232,180,184,.4); --shadow-sm: 0 6px 20px rgba(232,180,184,.22);
+  --transition: .38s cubic-bezier(.34,1.56,.64,1); --transition-smooth: .45s cubic-bezier(.34,1.56,.64,1);
+  --font: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Comic Sans MS", "Noto Sans SC", sans-serif;
+}
+[data-style="cute"] .btn { border-radius: 999px; }
+[data-style="cute"] .bg-decor::before,
+[data-style="cute"] .bg-decor::after { opacity: .7; }
+[data-style="cute"] .page-card::before {
+  content: "🌸"; position: absolute; top: 10px; right: 14px; font-size: 18px; opacity: .5; pointer-events: none;
+}
+[data-style="cute"] .page-card { position: relative; }
+
+/* 炫酷：深色玻璃拟态、霓虹发光、锐利高对比 */
+[data-style="cool"] {
+  --cream: #16171d; --cream-card: rgba(38,40,52,.72); --text: #f0f2f8; --text-light: #a4a8bb;
+  --pink-bg: rgba(255,255,255,.05); --line: rgba(255,255,255,.1);
+  --blue-soft: rgba(120,160,255,.14); --mint-soft: rgba(90,220,180,.14); --purple-soft: rgba(180,130,255,.14); --yellow-soft: rgba(240,210,120,.14);
+  --radius: 18px; --radius-sm: 13px; --radius-xs: 9px;
+  --shadow: 0 8px 32px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.05); --shadow-hover: 0 12px 40px rgba(0,0,0,.6), 0 0 22px var(--pink);
+  --shadow-sm: 0 4px 18px rgba(0,0,0,.45);
+}
+[data-style="cool"] body { background: radial-gradient(circle at 12% 15%, #1e2436, transparent 45%), radial-gradient(circle at 88% 85%, #241a30, transparent 45%), #16171d; }
+[data-style="cool"] .page-card, [data-style="cool"] .sidebar, [data-style="cool"] .mobile-bar, [data-style="cool"] .bottom-nav, [data-style="cool"] .sheet, [data-style="cool"] .checkin-card { backdrop-filter: blur(14px) saturate(1.2); -webkit-backdrop-filter: blur(14px) saturate(1.2); border: 1px solid rgba(255,255,255,.08); }
+[data-style="cool"] .btn-primary { box-shadow: 0 0 16px var(--pink); }
+[data-style="cool"] .nav-item.active, [data-style="cool"] .bn-item.active { text-shadow: 0 0 10px var(--pink); }
+[data-style="cool"] .bg-decor::before, [data-style="cool"] .bg-decor::after { opacity: .4; filter: blur(70px); }
+[data-style="cool"] #skin-pattern { opacity: 0 !important; }
+
+/* ── 右上角皮肤切换悬浮按钮（三端常驻）── */
+.skin-fab {
+  position: fixed; top: 14px; right: 14px; z-index: 1200;
+  width: 44px; height: 44px; border-radius: 50%; border: none; cursor: pointer;
+  background: var(--cream-card); color: var(--text); font-size: 20px;
+  box-shadow: var(--shadow-sm); display: flex; align-items: center; justify-content: center;
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+.skin-fab:hover { transform: rotate(-18deg) scale(1.08); box-shadow: var(--shadow-hover); }
+.skin-fab:active { transform: scale(.94); }
 
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -513,7 +569,64 @@ body {
 }
 .mb-theme:hover { transform: scale(1.08) rotate(-8deg); }
 .mb-theme:active { transform: scale(0.94); }
-@media (min-width: 769px) { .mb-theme { display: none; } }
+/* 手机端有品牌条自带 🎨，隐藏悬浮球避免与顶栏重叠；平板/电脑显示悬浮球 */
+@media (min-width: 768px) { .mb-theme { display: none; } }
+@media (max-width: 767px) { .skin-fab { display: none; } }
+.mb-settings { border: none; background: rgba(255,255,255,.7); width: 34px; height: 34px; border-radius: 50%; font-size: 17px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-sm); transition: transform .2s; }
+.mb-settings:hover { transform: scale(1.08) rotate(20deg); }
+.sidebar-settings { margin-top: 10px; width: 100%; border: 1px solid var(--line); background: var(--pink-soft); color: var(--text); border-radius: var(--radius-sm); padding: 9px; font-size: 13px; font-weight: 800; cursor: pointer; transition: filter .2s; }
+.sidebar-settings:hover { filter: brightness(1.03); }
+.sheet-wide { max-width: 460px; }
+.sheet-section { border-top: 1px dashed var(--line); padding-top: 12px; margin-top: 12px; }
+.sheet-sub { font-size: 13px; font-weight: 800; color: var(--text); margin: 4px 0 8px; }
+.mod-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 7px; }
+.mod-item { display: flex; align-items: center; gap: 8px; background: var(--cream); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 7px 9px; }
+.mod-item.dragging { opacity: .5; }
+.mod-handle { cursor: grab; color: var(--text-light); font-size: 13px; }
+.mod-icon { font-size: 17px; }
+.mod-label { flex: 1; min-width: 0; }
+.mod-up, .mod-down { border: none; background: var(--pink-soft); color: var(--text); width: 26px; height: 26px; border-radius: 8px; cursor: pointer; font-size: 11px; }
+.mod-up:disabled, .mod-down:disabled { opacity: .35; cursor: default; }
+.sync-row { display: flex; align-items: center; justify-content: space-between; font-size: 14px; font-weight: 700; margin-bottom: 8px; }
+.sync-status { font-size: 12px; color: var(--text-light); margin: 8px 0; }
+.sync-status:empty { display: none; }
+.style-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.style-chip { border: 2px solid transparent; background: var(--cream); border-radius: 20px; padding: 7px 14px; font-size: 13px; font-weight: 800; cursor: pointer; transition: all .2s; }
+.style-chip.active { border-color: var(--pink); background: var(--pink-soft); }
+/* ── 旅行计划 ── */
+.travel-total { font-size: 13px; color: var(--text-light); margin: 10px 0; }
+.travel-card { background: var(--cream); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 14px; margin-bottom: 12px; box-shadow: var(--shadow-sm); }
+.travel-head { display: flex; align-items: center; gap: 8px; }
+.travel-dest { font-size: 16px; font-weight: 800; color: var(--text); flex: 1; }
+.travel-time { font-size: 12px; color: var(--text-light); }
+.travel-sub { font-size: 13px; font-weight: 800; color: var(--pink); margin: 12px 0 6px; }
+.itin-row { display: flex; gap: 10px; font-size: 13px; padding: 4px 0; border-bottom: 1px dashed var(--line); }
+.itin-day { font-weight: 800; color: var(--text); min-width: 46px; }
+.itin-plan { color: var(--text); line-height: 1.6; }
+.pack-list { display: flex; flex-direction: column; gap: 4px; }
+.pack-item { font-size: 13px; display: flex; align-items: center; gap: 7px; cursor: pointer; }
+.pack-item .done { text-decoration: line-through; color: var(--text-light); }
+.cost-list { display: flex; flex-direction: column; gap: 4px; }
+.cost-row { display: flex; justify-content: space-between; font-size: 13px; padding: 3px 0; border-bottom: 1px dashed var(--line); }
+.cost-total { color: var(--pink); font-weight: 800; }
+.muted { font-size: 12px; color: var(--text-light); }
+.travel-editor { max-height: 82vh; overflow-y: auto; }
+.edit-row { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; }
+.edit-row .input { flex: 1; min-width: 0; }
+.edit-row .del-btn { flex-shrink: 0; }
+.item-actions { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+.watch-btn { border: none; background: var(--mint-soft, #D6F0E2); color: #2f8f63; border-radius: 10px; padding: 5px 9px; font-size: 12px; font-weight: 800; cursor: pointer; transition: filter .2s; }
+.watch-btn:hover { filter: brightness(1.04); }
+/* ── 每日打卡 ── */
+.checkin-card { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; background: linear-gradient(135deg, #FFF7E8, #FFEFD6); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 13px 15px; box-shadow: var(--shadow-sm); }
+.ck-left { flex: 1; min-width: 140px; }
+.ck-title { font-size: 15px; font-weight: 800; color: var(--text); }
+.ck-streak { font-size: 12px; color: var(--text-light); margin-top: 2px; }
+.ck-streak b { color: #E8913C; }
+.ck-btn { flex-shrink: 0; }
+.ck-month { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
+.ck-dot { width: 10px; height: 10px; border-radius: 50%; background: rgba(0,0,0,.06); }
+.ck-dot.on { background: #F2B84B; box-shadow: 0 0 0 2px rgba(242,184,75,.3); }
 
 /* ── 主题面板（底部弹出）── */
 .sheet-mask { position: fixed; inset: 0; background: rgba(120,90,95,0.3); backdrop-filter: blur(3px); z-index: 9997; opacity: 0; pointer-events: none; transition: opacity .3s; }
@@ -527,8 +640,10 @@ body {
 .sheet-dot.active { border-color: var(--text); transform: scale(1.12); box-shadow: 0 0 0 3px rgba(255,255,255,.7); }
 .sheet-dot .sd-name { position: absolute; bottom: -18px; left: 50%; transform: translateX(-50%); font-size: 9px; color: var(--text-light); white-space: nowrap; font-weight: 600; }
 
-/* ── 响应式 ── */
-@media (max-width: 768px) {
+/* ── 响应式：三端自适应（手机 ≤767 / 平板 768–1023 / 电脑 ≥1024）── */
+
+/* 📱 手机：底部标签导航 + 顶部品牌条，单列 */
+@media (max-width: 767px) {
   .app { display: block; }
   .sidebar { display: none; }
   .mobile-bar { display: flex; }
@@ -549,6 +664,28 @@ body {
   .w-hero { flex-wrap: wrap; }
   .w-toggle { margin-left: 0; width: 100%; }
 }
+
+/* 📲 平板：保留侧边栏，内容加宽，卡片列表两列 */
+@media (min-width: 768px) and (max-width: 1023px) {
+  :root { --sidebar-w: 168px; }
+  .main { padding: 26px 26px 60px; max-width: none; }
+  .rec-grid { grid-template-columns: repeat(3, 1fr); }
+  .travel-list, .item-list-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .travel-card { margin-bottom: 0; }
+}
+
+/* 💻 电脑：宽内容区，多列网格，更大留白 */
+@media (min-width: 1024px) {
+  .main { max-width: 1120px; padding: 34px 40px 70px; }
+  .rec-grid { grid-template-columns: repeat(4, 1fr); }
+  .travel-list, .item-list-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; align-items: start; }
+  .travel-card { margin-bottom: 0; }
+}
+@media (min-width: 1400px) {
+  .main { max-width: 1280px; }
+  .travel-list, .item-list-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
 @media (max-width: 480px) {
   .main { padding: 66px 11px 100px; }
   .cd-card { padding: 14px 16px; gap: 11px; }
@@ -664,7 +801,7 @@ body {
 .mood-li { display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px; }
 .mood-li-emoji { font-size: 20px; }
 .mood-li-date { font-size: 12px; font-weight: 800; color: var(--text); width: 48px; flex-shrink: 0; }
-.mood-li-note { flex: 1; font-size: 12.5px; color: var(--text-light); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mood-li-note { flex: 1 1 100%; font-size: 12.5px; color: var(--text); line-height: 1.6; white-space: normal; word-break: break-word; overflow: visible; text-overflow: clip; }
 
 @media (max-width: 768px) {
   .wc-cell { min-height: 46px; padding: 4px 2px; }
@@ -685,9 +822,12 @@ body {
   <div class="bg-decor"></div>
   <div id="skin-pattern"></div>
 
+  <button class="skin-fab" id="skin-fab" title="切换皮肤（颜色 + 风格）">🎨</button>
+
   <div class="mobile-bar">
     <span class="mb-avatar">💛</span>
     <span class="mb-title">米米 Daily</span>
+    <button class="mb-settings" id="mb-settings" title="设置">⚙️</button>
     <button class="mb-theme" id="mb-theme" title="切换主题">🎨</button>
     <span class="mb-date" id="mb-date"></span>
   </div>
@@ -702,6 +842,7 @@ body {
       <ul class="nav-menu" id="nav-menu"></ul>
       <div class="sidebar-footer"><span>💛</span><span>🌸</span><span>🍃</span></div>
       <div class="theme-picker" id="theme-picker"></div>
+      <button class="sidebar-settings" id="sidebar-settings">⚙️ 设置</button>
     </nav>
 
     <main class="main">
@@ -715,6 +856,26 @@ body {
   <div class="sheet" id="theme-sheet">
     <div class="sheet-title">🎨 选择一个主题色</div>
     <div class="sheet-dots" id="sheet-dots"></div>
+    <div class="sheet-sub" style="margin-top:14px;">✨ 皮肤风格</div>
+    <div class="style-row" id="style-row"></div>
+  </div>
+
+  <div class="sheet-mask" id="settings-mask"></div>
+  <div class="sheet sheet-wide" id="settings-sheet">
+    <div class="sheet-title">⚙️ 设置</div>
+    <div class="sheet-section">
+      <div class="sheet-sub">🧩 模块自定义（显隐 · 拖拽排序 · 改名）</div>
+      <ul class="mod-list" id="mod-list"></ul>
+      <button class="btn btn-ghost btn-sm" id="mod-reset">恢复默认顺序</button>
+    </div>
+    <div class="sheet-section">
+      <div class="sheet-sub">☁️ 云端同步（多端实时一致）</div>
+      <label class="sync-row"><span>开启同步</span><input type="checkbox" id="sync-on"></label>
+      <input class="input" id="sync-url" placeholder="同步服务器地址，如 https://your-host/api" />
+      <div class="sync-status" id="sync-status">未同步</div>
+      <button class="btn btn-primary btn-sm" id="sync-now">立即同步</button>
+    </div>
+    <button class="btn btn-ghost" id="settings-close">关闭</button>
   </div>
 
   <div class="sheet-mask" id="zodiac-mask"></div>
@@ -730,7 +891,8 @@ body {
 const LS = {
   weight: 'mm_weight', target: 'mm_weight_target', anniv: 'mm_anniv', todos: 'mm_todos',
   shows: 'mm_shows', reviews: 'mm_reviews', notes: 'mm_notes', mood: 'mm_mood',
-  travel: 'mm_travel', fortune: 'mm_fortune'
+  travel: 'mm_travel', fortune: 'mm_fortune',
+  modules: 'mm_modules', sync: 'mm_sync', checkin: 'mm_checkin', style: 'mm_style'
 };
 const SEED = {}; // 占位符，真实数据异步注入
 // ── 异步种子数据 (避免 3MB+ 阻塞首屏) ──
@@ -839,7 +1001,23 @@ function computeWeight() {
 function computeAnniv() {
   const items = (lsGet(LS.anniv, []) || []).slice().sort((a, b) => (a.date < b.date ? -1 : 1));
   const today = localToday();
-  items.forEach(it => { try { const cd = Math.round((pdate(it.date) - pdate(today)) / 86400000); it.countdown = cd; it.passed = cd < 0; it.abs_days = Math.abs(cd); it.total_days = Math.round((pdate(today) - pdate(it.date)) / 86400000); } catch (e) { it.countdown = null; } });
+  const t0 = new Date(); const tday = new Date(t0.getFullYear(), t0.getMonth(), t0.getDate());
+  const recurringCats = ['生日', '结婚', '恋爱'];
+  items.forEach(it => {
+    try {
+      const cd = Math.round((pdate(it.date) - pdate(today)) / 86400000);
+      it.countdown = cd; it.passed = cd < 0; it.abs_days = Math.abs(cd);
+      it.total_days = Math.round((pdate(today) - pdate(it.date)) / 86400000);
+      if (recurringCats.includes(it.category)) {
+        const [y, m, d] = it.date.split('-').map(Number);
+        let next = new Date(t0.getFullYear(), m - 1, d);
+        if (next < tday) next = new Date(t0.getFullYear() + 1, m - 1, d);
+        it.next_countdown = Math.round((next - tday) / 86400000);
+      } else {
+        it.next_countdown = cd;
+      }
+    } catch (e) { it.countdown = null; it.next_countdown = null; }
+  });
   return items;
 }
 function computeTodos() {
@@ -1018,7 +1196,8 @@ async function route(path, method, q, body) {
     if (method === 'POST') { const name = (body.name || '').trim(); if (!name) return { ok: false, message: 'name required' }; return { ok: true, data: addItem('shows', { name, type: body.type || '', platform: body.platform || '', status: body.status || '想看', rating: body.rating || 0, source: body.source || '手动' }) }; }
     if (method === 'DELETE') { delItem('shows', q.get('id')); return { ok: true, data: null }; }
   }
-  if (path === '/api/shows/recommend') return { ok: true, data: [] }; // 纯前端版无豆瓣推荐，可手动添加
+  if (path === '/api/shows/recommend') return { ok: true, data: [] }; // 真实列表由同步服务器的 /shows/recommend 提供（见 fetchRecommend）
+  if (path.startsWith('/api/shows/')) { const id = path.split('/').pop(); return { ok: true, data: updItem('shows', id, body) }; }
   // 影评
   if (path === '/api/reviews') {
     if (method === 'GET') return { ok: true, data: computeReviews(q.get('month')) };
@@ -1051,19 +1230,37 @@ async function api(url, method, body) {
 }
 seedIfEmpty();
 
-/* 💛 米米 Daily 前端 v5 — 精美 / 方便 / 快捷 */
-const NAV = [
-  { page: 'briefing', icon: '☀️', label: '今日播报' },
-  { page: 'todos', icon: '📋', label: '待办事项' },
-  { page: 'weight', icon: '⚖️', label: '体重记录' },
-  { page: 'notes', icon: '📝', label: '每日随笔' },
-  { page: 'calendar', icon: '🗓️', label: '日历提醒' },
-  { page: 'countdown', icon: '⏳', label: '倒计时' },
-  { page: 'weather', icon: '🌈', label: '实时天气' },
-  { page: 'anniv', icon: '💘', label: '纪念日' },
-  { page: 'shows', icon: '🍿', label: '追剧清单' },
-  { page: 'reviews', icon: '⭐', label: '剧集影评' },
+/* 💛 米米 Daily 前端 v6 — 工作台 / 云同步 / 可定制 */
+// 模块默认配置（顺序即默认导航顺序）。weather 已并入播报，travel 为新增模块。
+const DEFAULT_MODULES = [
+  { key: 'briefing', icon: '☀️', label: '今日播报', visible: true },
+  { key: 'todos', icon: '📋', label: '待办事项', visible: true },
+  { key: 'weight', icon: '⚖️', label: '体重记录', visible: true },
+  { key: 'notes', icon: '📝', label: '每日随笔', visible: true },
+  { key: 'calendar', icon: '🗓️', label: '日历提醒', visible: true },
+  { key: 'countdown', icon: '⏳', label: '倒计时', visible: true },
+  { key: 'anniv', icon: '💘', label: '纪念日', visible: true },
+  { key: 'shows', icon: '🍿', label: '追剧清单', visible: true },
+  { key: 'reviews', icon: '⭐', label: '剧集影评', visible: true },
+  { key: 'travel', icon: '🧳', label: '旅行计划', visible: true },
 ];
+function getModules() {
+  let mods = lsGet(LS.modules, null);
+  if (!mods || !Array.isArray(mods) || !mods.length) {
+    mods = DEFAULT_MODULES.map((m, i) => ({ ...m, order: i }));
+  } else {
+    const known = DEFAULT_MODULES.map(d => d.key);
+    // 丢弃未知 key，补齐新增 key（如后续增加模块）
+    mods = mods.filter(m => known.includes(m.key));
+    const have = new Set(mods.map(m => m.key));
+    DEFAULT_MODULES.forEach((m, i) => { if (!have.has(m.key)) mods.push({ ...m, order: 900 + i }); });
+    mods = mods.map((m, i) => ({ ...m, order: (m.order == null ? i : m.order) }));
+  }
+  return mods.slice().sort((a, b) => a.order - b.order);
+}
+function saveModules(mods) { lsSet(LS.modules, mods); }
+// 当前可见模块（按 order 排序）
+function visibleModules() { return getModules().filter(m => m.visible); }
 const THEMES = [
   { key: 'default', color: '#E8B4B8', name: '蜜桃粉' },
   { key: 'rose', color: '#D4778A', name: '玫瑰红' },
@@ -1232,10 +1429,11 @@ const calCache = {};
 
 /* ── 导航 / 主题 构建 ── */
 function buildNav() {
-  document.getElementById('nav-menu').innerHTML = NAV.map(n =>
-    `<li class="nav-item" data-page="${n.page}"><span class="nav-icon">${n.icon}</span><span class="nav-text">${n.label}</span></li>`).join('');
-  document.getElementById('bn-inner').innerHTML = NAV.map(n =>
-    `<div class="bn-item" data-page="${n.page}"><span class="bn-icon">${n.icon}</span><span class="bn-text">${n.label}</span></div>`).join('');
+  const mods = visibleModules();
+  document.getElementById('nav-menu').innerHTML = mods.map(n =>
+    `<li class="nav-item" data-page="${n.key}"><span class="nav-icon">${n.icon}</span><span class="nav-text">${n.label}</span></li>`).join('');
+  document.getElementById('bn-inner').innerHTML = mods.map(n =>
+    `<div class="bn-item" data-page="${n.key}"><span class="bn-icon">${n.icon}</span><span class="bn-text">${n.label}</span></div>`).join('');
   document.querySelectorAll('.nav-item').forEach(i => i.addEventListener('click', () => switchPage(i.dataset.page)));
   document.querySelectorAll('.bn-item').forEach(i => i.addEventListener('click', () => switchPage(i.dataset.page)));
 }
@@ -1246,7 +1444,159 @@ function buildThemes() {
     `<div class="sheet-dot" data-theme="${t.key}" style="background:${t.color}"><span class="sd-name">${t.name}</span></div>`).join('');
   document.querySelectorAll('.theme-dot, .sheet-dot').forEach(d =>
     d.addEventListener('click', () => setTheme(d.dataset.theme)));
+  buildStyles();
 }
+
+/* ── 皮肤风格（颜色之外的整体风格：默认/简约/可爱/炫酷）── */
+const STYLES = [
+  { key: 'default', name: '元气', em: '💛' },
+  { key: 'minimal', name: '简约', em: '🤍' },
+  { key: 'cute', name: '可爱', em: '🎀' },
+  { key: 'cool', name: '炫酷', em: '⚡' }
+];
+function getStyle() { return localStorage.getItem(LS.style) || 'default'; }
+function buildStyles() {
+  const row = document.getElementById('style-row');
+  if (!row) return;
+  const cur = getStyle();
+  row.innerHTML = STYLES.map(s =>
+    `<button class="style-chip ${s.key === cur ? 'active' : ''}" data-style="${s.key}">${s.em} ${s.name}</button>`).join('');
+  row.querySelectorAll('.style-chip').forEach(c => c.onclick = () => setStyle(c.dataset.style));
+}
+function setStyle(style) {
+  if (style === 'default') document.documentElement.removeAttribute('data-style');
+  else document.documentElement.setAttribute('data-style', style);
+  localStorage.setItem(LS.style, style);
+  document.querySelectorAll('.style-chip').forEach(c => c.classList.toggle('active', c.dataset.style === style));
+  const s = STYLES.find(x => x.key === style);
+  toast('✨ 已切换「' + (s ? s.name : '元气') + '」风格');
+}
+function applyStyle() {
+  const style = getStyle();
+  if (style === 'default') document.documentElement.removeAttribute('data-style');
+  else document.documentElement.setAttribute('data-style', style);
+}
+
+/* ── 模块自定义（显隐/排序/改名）── */
+function openSettings() {
+  renderModuleSettings(); renderSyncSettings();
+  document.getElementById('settings-sheet').classList.add('open');
+  document.getElementById('settings-mask').classList.add('open');
+}
+function closeSettings() {
+  document.getElementById('settings-sheet').classList.remove('open');
+  document.getElementById('settings-mask').classList.remove('open');
+}
+function renderModuleSettings() {
+  const mods = getModules();
+  const ul = document.getElementById('mod-list');
+  ul.innerHTML = mods.map((m, i) => `
+    <li class="mod-item" draggable="true" data-key="${m.key}">
+      <span class="mod-handle">☰</span>
+      <input type="checkbox" class="mod-vis" data-key="${m.key}" ${m.visible ? 'checked' : ''} />
+      <span class="mod-icon">${m.icon}</span>
+      <input class="input mod-label" data-key="${m.key}" value="${esc(m.label)}" maxlength="8" />
+      <button class="mod-up" data-key="${m.key}" ${i === 0 ? 'disabled' : ''}>▲</button>
+      <button class="mod-down" data-key="${m.key}" ${i === mods.length - 1 ? 'disabled' : ''}>▼</button>
+    </li>`).join('');
+  ul.querySelectorAll('.mod-vis').forEach(c => c.onchange = () => {
+    const m = getModules().find(x => x.key === c.dataset.key); m.visible = c.checked; saveModules(getModules()); buildNav(); renderModuleSettings();
+  });
+  ul.querySelectorAll('.mod-label').forEach(inp => inp.onchange = () => {
+    const m = getModules().find(x => x.key === inp.dataset.key); m.label = inp.value.trim() || m.label; saveModules(getModules()); buildNav();
+  });
+  ul.querySelectorAll('.mod-up').forEach(b => b.onclick = () => moveModule(b.dataset.key, -1));
+  ul.querySelectorAll('.mod-down').forEach(b => b.onclick = () => moveModule(b.dataset.key, 1));
+  enableModDrag(ul);
+}
+function moveModule(key, dir) {
+  const mods = getModules(); const i = mods.findIndex(m => m.key === key); const j = i + dir;
+  if (j < 0 || j >= mods.length) return;
+  const o = mods[i].order; mods[i].order = mods[j].order; mods[j].order = o;
+  saveModules(mods); buildNav(); renderModuleSettings();
+}
+function enableModDrag(ul) {
+  let dragKey = null;
+  ul.querySelectorAll('.mod-item').forEach(li => {
+    li.ondragstart = () => { dragKey = li.dataset.key; li.classList.add('dragging'); };
+    li.ondragend = () => { li.classList.remove('dragging'); dragKey = null; };
+    li.ondragover = (e) => e.preventDefault();
+    li.ondrop = () => {
+      if (!dragKey || dragKey === li.dataset.key) return;
+      const mods = getModules();
+      const a = mods.find(m => m.key === dragKey), b = mods.find(m => m.key === li.dataset.key);
+      const o = a.order; a.order = b.order; b.order = o;
+      saveModules(mods); buildNav(); renderModuleSettings();
+    };
+  });
+}
+function resetModules() { localStorage.removeItem(LS.modules); buildNav(); renderModuleSettings(); toast('已恢复默认模块顺序'); }
+
+/* ── 云端同步层 ── */
+function getSync() { return lsGet(LS.sync, { enabled: false, url: '', sid: '', rev: 0, last: 0 }); }
+function setSync(s) { lsSet(LS.sync, s); }
+function syncSnapshot() {
+  const data = {}; Object.values(LS).forEach(k => { const v = lsGet(k, null); if (v !== null) data[k] = v; }); return data;
+}
+function syncRestore(data) {
+  if (!data) return;
+  _suppressPush = true;
+  try { Object.values(LS).forEach(k => { if (k in data) lsSet(k, data[k]); }); }
+  finally { _suppressPush = false; }
+}
+let _pushTimer = null;
+function schedulePush() { if (_pushTimer) clearTimeout(_pushTimer); _pushTimer = setTimeout(pushSync, 800); }
+function updateSyncStatus(txt) { const el = document.getElementById('sync-status'); if (el) el.textContent = txt; }
+async function pushSync() {
+  const s = getSync(); if (!s.enabled || !s.url) return;
+  try {
+    const data = syncSnapshot();
+    const r = await fetch(s.url.replace(/\/$/, '') + '/sync', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sid: s.sid, data, rev: s.rev })
+    });
+    if (r.status === 409) { await pullSync(true); return; }
+    const j = await r.json();
+    if (j && j.rev != null) { s.rev = j.rev; setSync(s); }
+    s.last = Date.now(); setSync(s);
+    updateSyncStatus('已同步 ' + new Date().toLocaleTimeString());
+  } catch (e) { updateSyncStatus('同步失败：' + (e.message || '网络错误')); }
+}
+async function pullSync(afterPush) {
+  const s = getSync(); if (!s.enabled || !s.url) return;
+  try {
+    const r = await fetch(s.url.replace(/\/$/, '') + '/sync?sid=' + encodeURIComponent(s.sid));
+    const j = await r.json();
+    if (j && j.rev != null && j.rev > s.rev) {
+      syncRestore(j.data); s.rev = j.rev; s.last = Date.now(); setSync(s);
+      if (RENDERERS[currentPage]) RENDERERS[currentPage]();
+      updateSyncStatus('已拉取远程更新 ' + new Date().toLocaleTimeString());
+    } else if (afterPush) { /* 无更新 */ }
+  } catch (e) { /* 忽略拉取错误 */ }
+}
+function initSync() {
+  const s = getSync();
+  if (!s.sid) { s.sid = uid(); setSync(s); }
+  setInterval(() => pullSync(), 20000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) pullSync(); });
+  window.addEventListener('focus', () => pullSync());
+}
+function renderSyncSettings() {
+  const s = getSync();
+  const on = document.getElementById('sync-on'); if (on) on.checked = !!s.enabled;
+  const url = document.getElementById('sync-url'); if (url) url.value = s.url || '';
+  updateSyncStatus(s.last ? ('上次同步：' + new Date(s.last).toLocaleString()) : '未同步');
+}
+// 包裹 lsSet：业务数据写入触发防抖同步；同步元数据本身不触发，避免死循环
+let _suppressPush = false;
+const _realLsSet = lsSet;
+lsSet = function (k, v) {
+  _realLsSet(k, v);
+  // 同步状态(LS.sync)本身不算业务数据，写它不触发推送，否则 setSync→schedulePush→pushSync→setSync 死循环
+  if (k === LS.sync) return;
+  if (_suppressPush) return; // 拉取远程数据回填时不要再推回去
+  schedulePush();
+};
 function applyPattern(themeKey) {
   const sp = document.getElementById('skin-pattern');
   if (!sp) return;
@@ -1317,6 +1667,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const saved = localStorage.getItem('mimi-theme') || 'default';
   document.querySelectorAll('.theme-dot, .sheet-dot').forEach(d => d.classList.toggle('active', d.dataset.theme === saved));
   applyPattern(saved);
+  applyStyle();
   // 主题面板：顶部栏 🎨（手机端）与弹层
   const openSheet = () => {
     document.getElementById('sheet-mask').classList.add('open');
@@ -1328,10 +1679,29 @@ document.addEventListener('DOMContentLoaded', () => {
   };
   const mbTheme = document.getElementById('mb-theme');
   if (mbTheme) mbTheme.addEventListener('click', openSheet);
+  const skinFab = document.getElementById('skin-fab');
+  if (skinFab) skinFab.addEventListener('click', openSheet);
   document.getElementById('sheet-mask').addEventListener('click', closeSheet);
   // 星座面板
   buildZodiac();
   document.getElementById('zodiac-mask').addEventListener('click', closeZodiac);
+  // 设置面板（模块自定义 + 云端同步）
+  const openSettingsFn = () => openSettings();
+  document.getElementById('mb-settings').addEventListener('click', openSettingsFn);
+  document.getElementById('sidebar-settings').addEventListener('click', openSettingsFn);
+  document.getElementById('settings-close').addEventListener('click', closeSettings);
+  document.getElementById('settings-mask').addEventListener('click', closeSettings);
+  document.getElementById('mod-reset').addEventListener('click', resetModules);
+  document.getElementById('sync-on').addEventListener('change', (e) => {
+    const s = getSync(); s.enabled = e.target.checked; if (s.enabled && !s.sid) s.sid = uid(); setSync(s);
+    if (s.enabled && s.url) pushSync();
+  });
+  document.getElementById('sync-url').addEventListener('change', (e) => { const s = getSync(); s.url = e.target.value.trim(); setSync(s); });
+  document.getElementById('sync-now').addEventListener('click', () => {
+    const s = getSync(); if (!s.url) { toast('请先填写同步服务器地址'); return; }
+    if (!s.sid) s.sid = uid(); setSync(s); pushSync();
+  });
+  initSync();
   // 主题色随之更新 meta theme-color
   const applyMeta = () => {
     const cs = getComputedStyle(document.documentElement);
@@ -1355,6 +1725,44 @@ function updateClock() {
   const sd = document.getElementById('sidebar-date'); if (sd) sd.textContent = txt;
   const mb = document.getElementById('mb-date'); if (mb) mb.textContent = `${hh}:${mm} ${wd[n.getDay()]}`;
 }
+
+/* ── 每日打卡 ── */
+const checkinState = () => lsGet(LS.checkin, { last: '', streak: 0, history: [] });
+const doCheckin = () => {
+  const today = localToday();
+  const c = checkinState();
+  if (c.last === today) { toast('今天已经打卡啦 🌟'); return; }
+  const y = new Date(); y.setDate(y.getDate() - 1);
+  const yStr = iso(y);
+  c.streak = (c.last === yStr) ? (c.streak + 1) : 1;
+  c.last = today;
+  if (!c.history.includes(today)) c.history.push(today);
+  lsSet(LS.checkin, c);
+  toast('打卡成功 🌟 连续 ' + c.streak + ' 天');
+  if (RENDERERS[currentPage]) RENDERERS[currentPage]();
+};
+const checkinHtml = () => {
+  const c = checkinState();
+  const today = localToday();
+  const done = c.last === today;
+  const now = new Date();
+  const ym = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+  const days = (c.history || []).filter(d => d && d.startsWith(ym));
+  const dim = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  let dots = '';
+  for (let i = 1; i <= dim; i++) {
+    const ds = ym + '-' + String(i).padStart(2, '0');
+    dots += `<span class="ck-dot ${days.includes(ds) ? 'on' : ''}"></span>`;
+  }
+  return `<div class="checkin-card">
+    <div class="ck-left">
+      <div class="ck-title">${done ? '🌟 今日已打卡' : '☀️ 每日打卡'}</div>
+      <div class="ck-streak">🔥 连续 <b>${c.streak || 0}</b> 天 · 本月已打卡 ${days.length} 天</div>
+    </div>
+    <button class="btn btn-primary btn-sm ck-btn" id="ck-btn" ${done ? 'disabled' : ''}>${done ? '已打卡 ✓' : '打卡'}</button>
+    <div class="ck-month">${dots}</div>
+  </div>`;
+};
 
 // ── 今日播报 ──
 RENDERERS.briefing = async function () {
@@ -1427,6 +1835,7 @@ RENDERERS.briefing = async function () {
       const wTxt = weatherData ? `${weatherEmoji(weatherData.code)} ${weatherData.desc} ${weatherData.temp}°C` : '<span style="color:var(--text-light)">加载中...</span>';
       const wAdvice = weatherData ? weatherData.advice : '';
       el.innerHTML = `
+      ${checkinHtml()}
       <div class="greeting-card">
         <div class="greeting-clock">${hh}:${mm}</div>
         <div class="greeting-text">${gm.g}</div>
@@ -1448,6 +1857,8 @@ RENDERERS.briefing = async function () {
       </div>`;
       const fi = document.getElementById('bi-fortune');
       if (fi) fi.onclick = () => { fortuneExpanded = !fortuneExpanded; render(); };
+      const ckBtn = document.getElementById('ck-btn');
+      if (ckBtn) ckBtn.onclick = doCheckin;
       const sw = document.getElementById('fortune-switch');
       if (sw) sw.onclick = (e) => { e.stopPropagation(); openZodiac(); };
       document.querySelectorAll('.url-copy').forEach(cp => {
@@ -1520,7 +1931,7 @@ RENDERERS.calendar = async function () {
     const allMoods = keys.map(dt => ({ date: dt, mood: (moodByDate[dt] || {}).mood, note: (moodByDate[dt] || {}).note || '' }));
     const groups = groupByMonth(allMoods, it => it.date);
     const listHtml = groups.map(g => {
-      const rows = g.items.map(md => `<li class="mood-li"><span class="mood-li-emoji">${md.mood}</span><span class="mood-li-date">${fmtMD(md.date)}</span><span class="mood-li-note">${esc(md.note)}</span><button class="del-btn" data-mdel="${md.date}">🗑</button></li>`).join('');
+      const rows = g.items.map(md => `<li class="mood-li"><span class="mood-li-emoji">${md.mood}</span><span class="mood-li-date">${fmtMD(md.date)}</span><span class="mood-li-note">${esc(md.note)}</span><button class="edit-btn" data-med="${md.date}" title="编辑">✏️</button><button class="del-btn" data-mdel="${md.date}">🗑</button></li>`).join('');
       return `<div class="month-sec">
         <div class="month-head" onclick="this.nextElementSibling.classList.toggle('collapsed')"><span class="month-name">🗓️ ${g.label}</span><span class="month-count">${g.items.length} 天</span><span class="month-arrow">▾</span></div>
         <div class="month-body"><ul class="mood-list">${rows}</ul></div>
@@ -1556,6 +1967,17 @@ RENDERERS.calendar = async function () {
       const all = await api('/api/mood');
       const it = all.items.find(x => x.date === dt);
       if (it) { await api('/api/mood?id=' + it.id, 'DELETE'); await loadMood(); render(); renderMoodCard(); }
+    });
+    box.querySelectorAll('[data-med]').forEach(b => b.onclick = () => {
+      const dt = b.dataset.med;
+      const md = allMoods.find(x => x.date === dt);
+      if (!md) return;
+      document.getElementById('m-date').value = dt;
+      pickedMood = md.mood;
+      document.getElementById('m-note').value = md.note || '';
+      box.querySelectorAll('.mood-emoji').forEach(x => x.classList.toggle('on', x.dataset.m === md.mood));
+      toast('已填入，修改后点「保存心情」');
+      document.getElementById('m-note').focus();
     });
   };
 
@@ -1749,10 +2171,13 @@ RENDERERS.anniv = async function () {
       let cdTxt = cd === null ? '—' : (cd >= 0 ? `还有 <strong>${cd}</strong> 天` : `已过 <strong>${it.abs_days}</strong> 天`);
       let totalTxt = '';
       if (it.total_days != null && it.total_days > 0) totalTxt = `<span class="tag tag-mint">💛 已共度 ${it.total_days} 天</span>`;
+      const recurringCats = ['生日', '结婚', '恋爱'];
+      let nextTxt = '';
+      if (recurringCats.includes(it.category) && it.next_countdown != null) nextTxt = `<span class="tag tag-yellow">⏳ 距下次${it.category}还有 ${it.next_countdown} 天</span>`;
       return `<li class="item-card" style="animation-delay:${i * 0.04}s">
         <div class="item-main">
           <div class="item-title">${esc(it.name)} <span class="tag tag-pink">💌 ${it.category}</span> ${totalTxt}</div>
-          <div class="item-sub"><span class="tag tag-blue">${it.date}</span>${it.remind_days ? `<span class="tag tag-yellow">提前${it.remind_days}天提醒</span>` : ''}</div>
+          <div class="item-sub"><span class="tag tag-blue">${it.date}</span>${it.remind_days ? `<span class="tag tag-yellow">提前${it.remind_days}天提醒</span>` : ''}${nextTxt}</div>
           <div class="item-meta">⏳ ${cdTxt}</div>
           ${it.note ? `<div class="item-meta">📝 ${esc(it.note)}</div>` : ''}
         </div>
@@ -2046,12 +2471,7 @@ RENDERERS.shows = async function () {
     <div class="page-card">
       ${head('🍿', '追剧清单', '豆瓣推荐 · 手动添加 · 精简视图')}
       <div class="rec-bar">
-        <button class="btn btn-ghost btn-sm" id="s-toggle-rec">🔍 获取豆瓣推荐</button>
-        <div id="s-rec-panel" style="display:none;gap:8px;align-items:center;flex-wrap:wrap;width:100%;margin-top:8px;">
-          <select class="select" id="s-kind" style="max-width:90px;"><option value="tv">剧集</option><option value="movie">电影</option></select>
-          <select class="select" id="s-tag" style="max-width:100px;"><option>热门</option><option>最新</option><option>高分</option><option>华语</option></select>
-          <button class="btn btn-primary btn-sm" id="s-rec">搜索</button>
-        </div>
+        <button class="btn btn-ghost btn-sm" id="s-toggle-rec">🔥 豆瓣实时热门（每日更新）</button>
       </div>
       <div id="s-rec-list" class="rec-grid" style="display:none;"></div>
       <hr class="divider">
@@ -2069,11 +2489,10 @@ RENDERERS.shows = async function () {
     </div>`;
   enterToSubmit('s-add');
   document.getElementById('s-toggle-rec').onclick = () => {
-    const p = document.getElementById('s-rec-panel');
     const l = document.getElementById('s-rec-list');
-    const show = p.style.display === 'none';
-    p.style.display = show ? 'flex' : 'none';
+    const show = l.style.display === 'none';
     l.style.display = show ? 'grid' : 'none';
+    if (show) loadRecommend();
   };
   document.getElementById('s-add').onclick = async function () {
     const name = document.getElementById('s-name').value.trim();
@@ -2086,32 +2505,25 @@ RENDERERS.shows = async function () {
       } catch (e) { toast(e.message); }
     });
   };
-  document.getElementById('s-rec').onclick = async function () {
-    const kind = document.getElementById('s-kind').value;
-    const tag = document.getElementById('s-tag').value;
+  async function loadRecommend() {
     const box = document.getElementById('s-rec-list');
-    box.innerHTML = `<div style="color:var(--text-light);font-size:13px;padding:10px;">加载中...</div>`;
-    await withBtn(this, async () => {
-      try {
-        const recs = await api(`/api/shows/recommend?kind=${kind}&tag=${encodeURIComponent(tag)}`);
-        if (!recs.length) { box.innerHTML = `<div class="empty">暂未获取到推荐</div>`; return; }
-        box.innerHTML = recs.map((r, i) => `
-          <div class="rec-card">
-            ${r.cover ? `<img src="${r.cover}" class="rec-cover" onerror="this.style.display='none'" />` : ''}
-            <div class="rec-info">
-              <div class="rec-name">${esc(r.title)}</div>
-              <div class="rec-rate">⭐ ${r.rate || '暂无'}</div>
-            </div>
-            <button class="btn btn-primary btn-sm" data-rec="${i}">+ 待看</button>
-          </div>`).join('');
-        box.querySelectorAll('[data-rec]').forEach(b => b.onclick = async () => {
-          const r = recs[b.dataset.rec];
-          await api('/api/shows', 'POST', { name: r.title, type: kind === 'movie' ? '电影' : '剧集', status: '想看', source: '豆瓣推荐' });
-          toast('✅ 已加入待看'); load();
-        });
-      } catch (e) { box.innerHTML = `<div class="empty">推荐获取失败</div>`; }
+    box.innerHTML = `<div style="color:var(--text-light);font-size:13px;padding:10px;">加载豆瓣实时热门中...</div>`;
+    const recs = await getDoubanHot();
+    if (!recs.length) { box.innerHTML = `<div class="empty">暂无更新（需在「设置-同步」配置同步服务器，每天 09:00 自动刷新）</div>`; return; }
+    box.innerHTML = recs.map((r, i) => `
+      <div class="rec-card">
+        <div class="rec-info">
+          <div class="rec-name">${i + 1}. ${esc(r.name)}</div>
+          <div class="rec-rate">${esc(r.type || '影视')} · 豆瓣热门</div>
+        </div>
+        <button class="btn btn-primary btn-sm" data-rec="${i}">＋ 收藏</button>
+      </div>`).join('');
+    box.querySelectorAll('[data-rec]').forEach(b => b.onclick = async () => {
+      const r = recs[b.dataset.rec];
+      await api('/api/shows', 'POST', { name: r.name, type: r.type || '剧集', status: '想看', source: '豆瓣热门' });
+      toast('✅ 已收藏'); load();
     });
-  };
+  }
   async function load() {
     const items = await api('/api/shows');
     const list = document.getElementById('s-list');
@@ -2120,16 +2532,88 @@ RENDERERS.shows = async function () {
     const renderItem = (it) => `
       <li class="item-card">
         <div class="item-main">
-          <div class="item-title">${esc(it.name)} <span class="tag tag-purple">${it.status}</span></div>
-          <div class="item-sub">${it.type ? `<span class="tag tag-blue">${esc(it.type)}</span>` : ''}${it.source ? `<span class="tag" style="background:var(--cream);color:var(--text-light)">${esc(it.source)}</span>` : ''}</div>
+          <div class="item-title">${esc(it.name)} <span class="tag tag-purple">${esc(it.status)}</span></div>
+          <div class="item-sub">${it.type ? `<span class="tag tag-blue">${esc(it.type)}</span>` : ''}${it.platform ? `<span class="tag">${esc(it.platform)}</span>` : ''}${it.source ? `<span class="tag" style="background:var(--cream);color:var(--text-light)">${esc(it.source)}</span>` : ''}${it.rating ? `<span class="tag tag-yellow">⭐ ${it.rating}</span>` : ''}</div>
         </div>
-        <button class="del-btn" data-del="${it.id}">🗑</button>
+        <div class="item-actions">
+          ${it.status !== '已看完' ? `<button class="watch-btn" data-watch="${it.id}" title="标记已看">✅ 已看</button>` : ''}
+          <button class="edit-btn" data-edit="${it.id}" title="编辑">✏️</button>
+          <button class="del-btn" data-del="${it.id}">🗑</button>
+        </div>
       </li>`;
     list.innerHTML = monthSections(groups, renderItem);
     list.querySelectorAll('[data-del]').forEach(b => b.onclick = async () => { await api('/api/shows?id=' + b.dataset.del, 'DELETE'); load(); });
+    list.querySelectorAll('[data-edit]').forEach(b => b.onclick = () => openShowsEditor(b.dataset.edit));
+    list.querySelectorAll('[data-watch]').forEach(b => b.onclick = () => openWatchModal(b.dataset.watch));
   }
   load();
 };
+
+// ── 追剧：豆瓣热门 / 编辑 / 已看转影评 辅助 ──
+async function getDoubanHot() {
+  const s = getSync();
+  if (!s.enabled || !s.url) return [];
+  try {
+    const r = await fetch(s.url.replace(/\/$/, '') + '/shows/recommend');
+    const j = await r.json();
+    return Array.isArray(j) ? j : [];
+  } catch (e) { return []; }
+}
+async function openShowsEditor(id) {
+  const items = await api('/api/shows');
+  const it = items.find(x => x.id === id); if (!it) return;
+  const mask = document.createElement('div'); mask.className = 'modal-mask'; mask.style.display = 'flex';
+  mask.innerHTML = `<div class="modal-box">
+    <div class="modal-title">✏️ 编辑剧集</div>
+    <input class="input" id="se-name" value="${esc(it.name)}" placeholder="剧名"/>
+    <div class="form-row">
+      <select class="select" id="se-type"><option>剧集</option><option>电影</option><option>综艺</option><option>动漫</option></select>
+      <input class="input" id="se-platform" placeholder="平台" value="${esc(it.platform || '')}"/>
+    </div>
+    <select class="select" id="se-status"><option>想看</option><option>追更</option><option>已看完</option></select>
+    <input class="input" id="se-rating" type="number" placeholder="评分(0-5)" value="${it.rating || ''}"/>
+    <div class="modal-actions">
+      <button class="btn btn-ghost btn-sm" id="se-cancel">取消</button>
+      <button class="btn btn-primary btn-sm" id="se-save">保存</button>
+    </div>
+  </div>`;
+  document.body.appendChild(mask);
+  mask.querySelector('#se-type').value = it.type || '剧集';
+  mask.querySelector('#se-status').value = it.status || '想看';
+  mask.querySelector('#se-cancel').onclick = () => mask.remove();
+  mask.querySelector('#se-save').onclick = async () => {
+    const name = mask.querySelector('#se-name').value.trim();
+    if (!name) { toast('请输入剧名'); return; }
+    await api('/api/shows/' + id, 'PUT', {
+      name, type: mask.querySelector('#se-type').value, platform: mask.querySelector('#se-platform').value,
+      status: mask.querySelector('#se-status').value, rating: parseFloat(mask.querySelector('#se-rating').value) || 0
+    });
+    mask.remove(); toast('已保存'); switchPage('shows');
+  };
+  mask.addEventListener('click', (e) => { if (e.target === mask) mask.remove(); });
+}
+async function openWatchModal(id) {
+  const items = await api('/api/shows');
+  const it = items.find(x => x.id === id); if (!it) return;
+  const mask = document.createElement('div'); mask.className = 'modal-mask'; mask.style.display = 'flex';
+  mask.innerHTML = `<div class="modal-box">
+    <div class="modal-title">✅ 标记已看 · ${esc(it.name)}</div>
+    <div class="form-row"><span style="font-size:13px;font-weight:800;">评分</span><select class="select" id="wm-rate"><option>5</option><option>4</option><option>3</option><option>2</option><option>1</option></select></div>
+    <textarea class="input" id="wm-content" placeholder="一句话影评..." style="min-height:72px;"></textarea>
+    <div class="modal-actions">
+      <button class="btn btn-ghost btn-sm" id="wm-cancel">取消</button>
+      <button class="btn btn-primary btn-sm" id="wm-save">保存并转入影评</button>
+    </div>
+  </div>`;
+  document.body.appendChild(mask);
+  mask.querySelector('#wm-cancel').onclick = () => mask.remove();
+  mask.querySelector('#wm-save').onclick = async () => {
+    await api('/api/reviews', 'POST', { name: it.name, kind: it.type || '剧集', watch_date: localToday(), rating: parseInt(mask.querySelector('#wm-rate').value) || 5, content: mask.querySelector('#wm-content').value.trim() });
+    await api('/api/shows/' + id, 'PUT', { status: '已看完' });
+    mask.remove(); toast('已转入剧集影评 🎬'); switchPage('shows');
+  };
+  mask.addEventListener('click', (e) => { if (e.target === mask) mask.remove(); });
+}
 
 // ── 影评 ──
 RENDERERS.reviews = async function () {
@@ -2296,6 +2780,108 @@ RENDERERS.notes = async function () {
     list.querySelectorAll('[data-edit]').forEach(b => b.onclick = () => openEdit(currentNotes.find(x => x.id === b.dataset.edit)));
   }
   load();
+};
+
+/* ── 旅行计划 ── */
+RENDERERS.travel = function () {
+  const el = document.getElementById('content-area');
+  const load = () => lsGet(LS.travel, []);
+  const save = (arr) => lsSet(LS.travel, arr);
+  const costTotal = (t) => (t.costs || []).reduce((s, c) => s + (parseFloat(c.amount) || 0), 0);
+  const render = () => {
+    const items = load();
+    const allTotal = items.reduce((s, t) => s + costTotal(t), 0);
+    el.innerHTML = `<div class="page-card">
+      ${head('🧳', '旅行计划', '行程安排 · 打包清单 · 花费合计')}
+      <button class="btn btn-primary btn-sm" id="t-add">＋ 新增旅行</button>
+      <div class="travel-total">💰 全部计划总花费：<b>¥${allTotal.toFixed(2)}</b></div>
+      <div id="t-list" class="travel-list">${items.length ? items.map(travelCard).join('') : '<div class="empty">还没有旅行计划，先加一个吧 ✈️</div>'}</div>
+    </div>`;
+    el.querySelector('#t-add').onclick = () => openTravelEditor(null);
+    el.querySelectorAll('[data-edit]').forEach(b => b.onclick = () => openTravelEditor(b.dataset.edit));
+    el.querySelectorAll('[data-del]').forEach(b => b.onclick = async () => {
+      if (!confirm('确定删除该旅行计划？')) return;
+      save(load().filter(x => x.id !== b.dataset.del));
+      toast('已删除'); render();
+    });
+    el.querySelectorAll('.pack-check').forEach(c => c.onchange = () => {
+      const t = load().find(x => x.id === c.dataset.tid); if (!t) return;
+      t.packing[c.dataset.pi].done = c.checked; save(load()); render();
+    });
+  };
+  const travelCard = (t) => {
+    const ct = costTotal(t);
+    const itin = (t.itinerary || []).map((d, i) => `<div class="itin-row"><span class="itin-day">${esc(d.day || ('Day' + (i + 1)))}</span><span class="itin-plan">${esc(d.plan || '')}</span></div>`).join('');
+    const pack = (t.packing || []).map((p, i) => `<label class="pack-item"><input type="checkbox" class="pack-check" data-tid="${t.id}" data-pi="${i}" ${p.done ? 'checked' : ''}/> <span class="${p.done ? 'done' : ''}">${esc(p.item)}</span></label>`).join('');
+    const costs = (t.costs || []).map(c => `<div class="cost-row"><span>${esc(c.item || '')}</span><span>¥${(parseFloat(c.amount) || 0).toFixed(2)}</span></div>`).join('');
+    return `<div class="travel-card">
+      <div class="travel-head"><span class="travel-dest">${esc(t.dest)}</span><span class="travel-time">${esc(t.time || '')}</span>
+        <button class="edit-btn" data-edit="${t.id}" title="编辑">✏️</button><button class="del-btn" data-del="${t.id}">🗑</button></div>
+      ${itin ? `<div class="travel-sub">🗺️ 行程安排</div>${itin}` : ''}
+      ${pack ? `<div class="travel-sub">🎒 打包清单</div><div class="pack-list">${pack}</div>` : ''}
+      <div class="travel-sub">💰 花费 <span class="cost-total">合计 ¥${ct.toFixed(2)}</span></div>
+      ${costs ? `<div class="cost-list">${costs}</div>` : '<div class="muted">暂无花费记录</div>'}
+    </div>`;
+  };
+  const openTravelEditor = (id) => {
+    const items = load();
+    const t = id ? items.find(x => x.id === id) : null;
+    const data = t ? JSON.parse(JSON.stringify(t)) : { id: uid(), dest: '', time: '', itinerary: [], packing: [], costs: [] };
+    data.itinerary = data.itinerary || []; data.packing = data.packing || []; data.costs = data.costs || [];
+    const mask = document.createElement('div'); mask.className = 'modal-mask'; mask.style.display = 'flex';
+    mask.innerHTML = `<div class="modal-box travel-editor">
+      <div class="modal-title">${t ? '✏️ 编辑旅行' : '＋ 新增旅行'}</div>
+      <div class="form-row"><input class="input" id="te-dest" placeholder="目的地，如 云南" value="${esc(data.dest)}"/>
+        <input class="input" id="te-time" placeholder="出行时间/备注" value="${esc(data.time)}"/></div>
+      <div class="travel-sub">🗺️ 行程安排</div>
+      <div id="te-itin"></div><button class="btn btn-ghost btn-sm" id="te-itin-add">＋ 加一天</button>
+      <div class="travel-sub">🎒 打包清单</div>
+      <div id="te-pack"></div><button class="btn btn-ghost btn-sm" id="te-pack-add">＋ 加一项</button>
+      <div class="travel-sub">💰 花费明细</div>
+      <div id="te-cost"></div><button class="btn btn-ghost btn-sm" id="te-cost-add">＋ 加一项</button>
+      <div class="travel-total">合计：¥<span id="te-total">0.00</span></div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost btn-sm" id="te-cancel">取消</button>
+        <button class="btn btn-primary btn-sm" id="te-save">保存</button>
+      </div>
+    </div>`;
+    document.body.appendChild(mask);
+    const calcTotal = () => { mask.querySelector('#te-total').textContent = data.costs.reduce((s, c) => s + (parseFloat(c.amount) || 0), 0).toFixed(2); };
+    const renderItin = () => { mask.querySelector('#te-itin').innerHTML = data.itinerary.map((d, i) => `<div class="edit-row"><input class="input te-day" data-i="${i}" value="${esc(d.day)}" placeholder="Day${i + 1}"/><input class="input te-plan" data-i="${i}" value="${esc(d.plan)}" placeholder="安排"/><button class="del-btn" data-i="${i}">🗑</button></div>`).join(''); bindItin(); };
+    const bindItin = () => {
+      mask.querySelectorAll('.te-day,.te-plan').forEach(inp => inp.oninput = () => { data.itinerary[inp.dataset.i][inp.classList.contains('te-day') ? 'day' : 'plan'] = inp.value; });
+      mask.querySelectorAll('#te-itin .del-btn').forEach(b => b.onclick = () => { data.itinerary.splice(b.dataset.i, 1); renderItin(); });
+    };
+    const renderPack = () => { mask.querySelector('#te-pack').innerHTML = data.packing.map((p, i) => `<div class="edit-row"><input class="input te-pack-item" data-i="${i}" value="${esc(p.item)}" placeholder="物品"/><button class="del-btn" data-i="${i}">🗑</button></div>`).join(''); bindPack(); };
+    const bindPack = () => {
+      mask.querySelectorAll('.te-pack-item').forEach(inp => inp.oninput = () => { data.packing[inp.dataset.i].item = inp.value; });
+      mask.querySelectorAll('#te-pack .del-btn').forEach(b => b.onclick = () => { data.packing.splice(b.dataset.i, 1); renderPack(); });
+    };
+    const renderCost = () => { mask.querySelector('#te-cost').innerHTML = data.costs.map((c, i) => `<div class="edit-row"><input class="input te-cost-item" data-i="${i}" value="${esc(c.item)}" placeholder="项目"/><input class="input te-cost-amt" data-i="${i}" value="${esc(c.amount)}" placeholder="金额" type="number"/><button class="del-btn" data-i="${i}">🗑</button></div>`).join(''); bindCost(); };
+    const bindCost = () => {
+      mask.querySelectorAll('.te-cost-item').forEach(inp => inp.oninput = () => { data.costs[inp.dataset.i].item = inp.value; });
+      mask.querySelectorAll('.te-cost-amt').forEach(inp => inp.oninput = () => { data.costs[inp.dataset.i].amount = inp.value; calcTotal(); });
+      mask.querySelectorAll('#te-cost .del-btn').forEach(b => b.onclick = () => { data.costs.splice(b.dataset.i, 1); renderCost(); calcTotal(); });
+    };
+    renderItin(); renderPack(); renderCost(); calcTotal();
+    mask.querySelector('#te-itin-add').onclick = () => { data.itinerary.push({ day: 'Day' + (data.itinerary.length + 1), plan: '' }); renderItin(); };
+    mask.querySelector('#te-pack-add').onclick = () => { data.packing.push({ item: '', done: false }); renderPack(); };
+    mask.querySelector('#te-cost-add').onclick = () => { data.costs.push({ item: '', amount: '' }); renderCost(); calcTotal(); };
+    mask.querySelector('#te-cancel').onclick = () => mask.remove();
+    mask.querySelector('#te-save').onclick = () => {
+      data.dest = mask.querySelector('#te-dest').value.trim();
+      data.time = mask.querySelector('#te-time').value.trim();
+      if (!data.dest) { toast('请填写目的地'); return; }
+      data.itinerary = data.itinerary.filter(d => (d.plan || '').trim());
+      data.packing = data.packing.filter(p => (p.item || '').trim());
+      data.costs = data.costs.filter(c => (c.item || '').trim());
+      let arr = load(); const idx = arr.findIndex(x => x.id === data.id);
+      if (idx >= 0) arr[idx] = data; else arr.push(data);
+      save(arr); mask.remove(); toast('已保存'); render();
+    };
+    mask.addEventListener('click', (e) => { if (e.target === mask) mask.remove(); });
+  };
+  render();
 };
 
 </script>
