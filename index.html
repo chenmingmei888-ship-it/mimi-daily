@@ -2804,7 +2804,7 @@ RENDERERS.shows = async function () {
   const el = document.getElementById('content-area');
   el.innerHTML = `
     <div class="page-card">
-      ${head('🍿', '追剧清单', '每天 09:00 更新豆瓣热门')}
+      ${head('🍿', '追剧清单', '浏览器自动扒取豆瓣热门 · 零配置')}
       <div class="rec-bar">
         <span class="rec-label" id="s-rec-info">豆瓣热门榜 · 实时采集</span>
         <button class="btn btn-ghost btn-sm" id="s-refresh-btn">↻ 立即刷新</button>
@@ -2872,20 +2872,20 @@ RENDERERS.shows = async function () {
       recs = await getDoubanHotKind(_currentKind, _currentTag);
     } catch (e) { /* fallback to cache */ }
 
-    // 服务器无数据时用本地缓存
+    // 服务器/直连都无数据时，用本地缓存兜底
     if (!recs.length) {
       recs = cachedDoubanRec().filter(r => {
-        if (_currentTag === '综艺') return r.type === '剧集'; // 综艺暂归入剧集类展示
-        if (_currentKind === 'tv') return r.type === '剧集';
-        if (_currentKind === 'movie') return r.type === '电影';
-        return true;
+        const t = r.type;
+        if (_currentTag === '综艺') return t === '综艺';        // 综艺单独归类
+        if (_currentKind === 'movie') return t === '电影';
+        return t === '剧集' || t === '综艺';                    // tv 含剧集/综艺
       });
     }
 
     // 更新信息栏时间戳
     const ts = parseInt(localStorage.getItem(SHOWS_REC_TS) || '0', 10);
     const when = ts ? ' · 更新于 ' + new Date(ts).toLocaleString('zh-CN', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }) : '';
-    infoEl.textContent = `豆瓣${_currentTag}榜 · 实时采集${when} · 每天 09:00 自动刷新`;
+    infoEl.textContent = `豆瓣${_currentTag}榜 · 实时采集${when} · 浏览器直连，无需服务器`;
 
     if (!recs.length) {
       box.innerHTML = `<div class="empty">暂无数据（需在「设置-同步」配置同步服务器）</div>`;
@@ -2956,29 +2956,78 @@ RENDERERS.shows = async function () {
 };
 
 // ── 追剧：豆瓣热门 / 编辑 / 已看转影评 辅助 ──
-async function getDoubanHot() {
-  const s = getSync();
-  if (!s.enabled || !s.url) return [];
+// ── 豆瓣直连（零配置：浏览器经公共 CORS 代理扒取豆瓣，无需部署服务器）──
+const DOUBAN_CORS_PROXY = 'https://proxy.cors.sh/';
+const _recMemo = {};                 // 会话内分类缓存，避免重复请求
+const _recMemoTTL = 5 * 60 * 1000;   // 5 分钟
+
+// 经 CORS 代理直连豆瓣 JSON 接口，返回归一化列表
+async function getDoubanDirect(kind, tag) {
+  const target = 'https://movie.douban.com/j/search_subjects?type=' +
+    encodeURIComponent(kind) + '&tag=' + encodeURIComponent(tag) +
+    '&sort=recommend&page_limit=20&page_start=0';
+  const ctrl = new AbortController();
+  const tid = setTimeout(() => ctrl.abort(), 20000);
   try {
-    const r = await fetch(s.url.replace(/\/$/, '') + '/shows/recommend');
+    const r = await fetch(DOUBAN_CORS_PROXY + target, {
+      signal: ctrl.signal,
+      headers: { 'User-Agent': 'Mozilla/5.0' }
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
     const j = await r.json();
-    return Array.isArray(j) ? j : [];
-  } catch (e) { return []; }
+    const subs = (j && j.subjects) || [];
+    const typeMap = tag === '综艺' ? '综艺' : (kind === 'movie' ? '电影' : '剧集');
+    return subs.map((s, i) => ({
+      name: s.title, title: s.title, type: typeMap, platform: '豆瓣',
+      source: '豆瓣' + tag, hot: i + 1,
+      rate: (s.rate || '').trim(), url: s.url || '',
+      cover: s.cover || '', episodes_info: s.episodes_info || '',
+      id: s.id || '', is_new: s.is_new || false,
+    }));
+  } finally { clearTimeout(tid); }
 }
 
-/** 按分类(kind=tv/movie, tag=热门/最新/高分/华语/综艺)从同步服务器拉取豆瓣热门 */
-async function getDoubanHotKind(kind, tag) {
+// 同步服务器未配置时，自动转为浏览器直连（零配置自动扒）
+async function getDoubanHot() {
   const s = getSync();
-  if (!s.enabled || !s.url) return [];
-  try {
-    const base = s.url.replace(/\/$/, '');
-    const params = new URLSearchParams();
-    if (kind) params.set('kind', kind);
-    if (tag) params.set('tag', tag);
-    const r = await fetch(base + '/shows/recommend?' + params.toString());
-    const j = await r.json();
-    return Array.isArray(j) ? j : [];
-  } catch (e) { return []; }
+  if (s.enabled && s.url) {
+    try {
+      const r = await fetch(s.url.replace(/\/$/, '') + '/shows/recommend');
+      if (r.ok) { const j = await r.json(); if (Array.isArray(j) && j.length) return j; }
+    } catch (e) { /* 直连兜底 */ }
+  }
+  // 零配置：直连三个分类并合并进缓存
+  let all = [];
+  for (const [k, t] of [['tv', '热门'], ['movie', '热门'], ['tv', '综艺']]) {
+    try { const recs = await getDoubanDirect(k, t); if (recs.length) all = all.concat(recs); }
+    catch (e) { /* 跳过失败分类 */ }
+  }
+  return all;
+}
+
+/** 按分类(kind=tv/movie, tag=热门/综艺…)拉取豆瓣热门；无服务器时浏览器直连零配置 */
+async function getDoubanHotKind(kind, tag) {
+  const key = (kind || '') + '|' + (tag || '');
+  const m = _recMemo[key];
+  if (m && Date.now() - m.t < _recMemoTTL) return m.data;
+
+  let recs = [];
+  const s = getSync();
+  if (s.enabled && s.url) {
+    try {
+      const base = s.url.replace(/\/$/, '');
+      const params = new URLSearchParams();
+      if (kind) params.set('kind', kind);
+      if (tag) params.set('tag', tag);
+      const r = await fetch(base + '/shows/recommend?' + params.toString());
+      if (r.ok) { const j = await r.json(); if (Array.isArray(j) && j.length) recs = j; }
+    } catch (e) { /* 直连兜底 */ }
+  }
+  if (!recs.length) {
+    try { recs = await getDoubanDirect(kind, tag); } catch (e) { recs = []; }
+  }
+  _recMemo[key] = { t: Date.now(), data: recs };
+  return recs;
 }
 
 // ── 豆瓣热门：本地缓存 + 每日 09:00 自动刷新 ──
