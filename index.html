@@ -787,10 +787,10 @@ body {
 .wc-tip { text-align: center; font-size: 10.5px; color: var(--text-light); margin-bottom: 10px; font-weight: 600; }
 .wc-weekhead { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 6px; }
 .wc-weekhead span { text-align: center; font-size: 11px; color: var(--text-light); font-weight: 700; padding: 3px 0; }
-.wc-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
-.wc-cell { background: #fff; border: 1.5px solid transparent; border-radius: 11px; min-height: 52px; padding: 6px 3px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; cursor: pointer; transition: all var(--transition); }
+.wc-grid { display: grid; grid-template-columns: repeat(7, 1fr); grid-auto-rows: 58px; gap: 4px; }
+.wc-cell { background: #fff; border: 1.5px solid var(--line); border-radius: 10px; height: 100%; padding: 4px 2px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; cursor: pointer; transition: all var(--transition); box-sizing: border-box; }
 .wc-cell:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
-.wc-cell.empty { background: transparent; cursor: default; border: none; box-shadow: none; }
+.wc-cell.empty { background: var(--cream); cursor: default; box-shadow: none; }
 .wc-cell.today { background: linear-gradient(135deg, var(--pink-bg), var(--pink-soft)); border-color: var(--pink); box-shadow: 0 5px 16px rgba(232,180,184,.3); }
 .wc-d { font-size: 13px; font-weight: 800; color: var(--text); }
 .wc-w { font-size: 12.5px; font-weight: 800; color: var(--pink); font-variant-numeric: tabular-nums; margin-top: 1px; }
