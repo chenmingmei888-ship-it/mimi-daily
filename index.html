@@ -659,6 +659,7 @@ body {
 .sync-row { display: flex; align-items: center; justify-content: space-between; font-size: 14px; font-weight: 700; margin-bottom: 8px; }
 .sync-status { font-size: 12px; color: var(--text-light); margin: 8px 0; }
 .sync-status:empty { display: none; }
+.sync-btns { display: flex; gap: 8px; flex-wrap: wrap; }
 .pair-box { margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--line); }
 .pair-label { font-size: 12px; font-weight: 800; color: var(--text); margin-bottom: 6px; }
 .pair-code-row { display: flex; align-items: center; gap: 8px; }
@@ -1685,8 +1686,8 @@ async function pushSync() {
     const isHttpUrl = /^http:\/\//.test(s.url);
     const isHttpsUrl = /^https:\/\//.test(s.url);
     if (location.protocol === 'file:') {
-      // Firefox 下本地文件(file://)的跨域 fetch 常被直接拦截
-      msg = '本地文件(file://)在 Firefox 下无法跨域同步：请用 Chrome 打开，或把前端部署到 https 网站（如 GitHub Pages）后再同步';
+      // 本地文件(file://)的跨域 fetch 常被浏览器拦截（Firefox 尤甚）
+      msg = '本地文件(file://)无法跨域同步：请用 Chrome 打开，或把前端部署到 https 网站（如 GitHub Pages）后再同步';
     } else if (location.protocol === 'https:' && isHttpUrl) {
       msg = '混合内容被拦截：前端是 https，同步服务器也需 https（反向代理配证书 / Cloudflare Tunnel）';
     } else if (/Failed to fetch|NetworkError/i.test(msg)) {
@@ -1918,7 +1919,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (e) {
       let msg = e.message || '网络错误';
       const isHttpUrl = /^http:\/\//.test(s.url);
-      if (location.protocol === 'file:') msg = '本地文件(file://)在 Firefox 下无法跨域请求，请用 Chrome 或部署到 https 网站';
+      if (location.protocol === 'file:') msg = '本地文件(file://)无法跨域同步：请用 Chrome 打开，或把前端部署到 https 网站（如 GitHub Pages）';
       else if (location.protocol === 'https:' && isHttpUrl) msg = '混合内容被拦截：前端 https，服务器需 https';
       else if (/Failed to fetch|NetworkError|abort/i.test(msg)) msg = '无法连接（地址错误 / 服务未启动 / 跨域 / 网络不通 / 证书无效）';
       updateSyncStatus('连接失败：' + msg);
