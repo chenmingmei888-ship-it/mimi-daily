@@ -1905,7 +1905,7 @@ document.addEventListener('DOMContentLoaded', () => {
     updateSyncStatus('测试连接中…');
     try {
       const ctrl = new AbortController();
-      const t = setTimeout(() => ctrl.abort(), 8000);
+      const t = setTimeout(() => ctrl.abort(), 30000);
       const r = await fetch(base + '/shows/recommend', { signal: ctrl.signal });
       clearTimeout(t);
       if (r.ok) {
