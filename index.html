@@ -944,7 +944,10 @@ body {
       <label class="sync-row"><span>开启同步</span><input type="checkbox" id="sync-on"></label>
       <input class="input" id="sync-url" placeholder="同步服务器地址，如 https://your-host/api" />
       <div class="sync-status" id="sync-status">未同步</div>
-      <button class="btn btn-primary btn-sm" id="sync-now">立即同步</button>
+      <div class="sync-btns">
+        <button class="btn btn-primary btn-sm" id="sync-now">立即同步</button>
+        <button class="btn btn-ghost btn-sm" id="sync-test">测试连接</button>
+      </div>
       <div class="pair-box">
         <div class="pair-label">🔑 我的同步码（在其它设备粘贴此码即可共享数据）</div>
         <div class="pair-code-row">
@@ -1679,11 +1682,16 @@ async function pushSync() {
     return true;
   } catch (e) {
     let msg = e.message || '网络错误';
-    // 混合内容：https 页面无法请求 http 服务器，浏览器直接拦截
-    if (location.protocol === 'https:' && /^http:\/\//.test(s.url)) {
+    const isHttpUrl = /^http:\/\//.test(s.url);
+    const isHttpsUrl = /^https:\/\//.test(s.url);
+    if (location.protocol === 'file:') {
+      // Firefox 下本地文件(file://)的跨域 fetch 常被直接拦截
+      msg = '本地文件(file://)在 Firefox 下无法跨域同步：请用 Chrome 打开，或把前端部署到 https 网站（如 GitHub Pages）后再同步';
+    } else if (location.protocol === 'https:' && isHttpUrl) {
       msg = '混合内容被拦截：前端是 https，同步服务器也需 https（反向代理配证书 / Cloudflare Tunnel）';
-    } else if (/Failed to fetch/i.test(msg)) {
-      msg = '无法连接服务器（地址错误 / 服务未启动 / 跨域）';
+    } else if (/Failed to fetch|NetworkError/i.test(msg)) {
+      if (isHttpsUrl) msg = '无法连接 https 同步服务器（地址错误 / 证书无效 / 服务未启动）';
+      else msg = '无法连接服务器（地址错误 / 服务未启动 / 跨域 / 网络不通）';
     }
     updateSyncStatus('同步失败：' + msg);
     return false;
@@ -1888,6 +1896,34 @@ document.addEventListener('DOMContentLoaded', () => {
     const st = document.getElementById('sync-status');
     if (ok) toast('✅ 已同步');
     else toast('⚠️ ' + (st ? st.textContent.replace('同步失败：', '') : '同步失败'));
+  });
+  // 测试连接：直接探测服务器，返回真实 HTTP 状态 / 网络错误，便于定位问题
+  document.getElementById('sync-test').addEventListener('click', async () => {
+    const s = getSync(); if (!s.url) { toast('请先填写同步服务器地址'); return; }
+    const base = s.url.replace(/\/$/, '');
+    updateSyncStatus('测试连接中…');
+    try {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 8000);
+      const r = await fetch(base + '/shows/recommend', { signal: ctrl.signal });
+      clearTimeout(t);
+      if (r.ok) {
+        const j = await r.json().catch(() => []);
+        updateSyncStatus('连接成功 ✅ 服务器返回 ' + r.status + '，热门 ' + (Array.isArray(j) ? j.length : '?') + ' 条');
+        toast('✅ 连接成功，可点「立即同步」');
+      } else {
+        updateSyncStatus('服务器可达但返回 ' + r.status + '（地址/路径不对，或不是本同步服务）');
+        toast('⚠️ 服务器返回 ' + r.status);
+      }
+    } catch (e) {
+      let msg = e.message || '网络错误';
+      const isHttpUrl = /^http:\/\//.test(s.url);
+      if (location.protocol === 'file:') msg = '本地文件(file://)在 Firefox 下无法跨域请求，请用 Chrome 或部署到 https 网站';
+      else if (location.protocol === 'https:' && isHttpUrl) msg = '混合内容被拦截：前端 https，服务器需 https';
+      else if (/Failed to fetch|NetworkError|abort/i.test(msg)) msg = '无法连接（地址错误 / 服务未启动 / 跨域 / 网络不通 / 证书无效）';
+      updateSyncStatus('连接失败：' + msg);
+      toast('⚠️ 连接失败：' + msg);
+    }
   });
   // 同步配对码：复制本机码 / 绑定对方码
   document.getElementById('sid-copy').addEventListener('click', () => {
