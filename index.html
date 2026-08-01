@@ -2748,9 +2748,9 @@ RENDERERS.shows = async function () {
     <div class="page-card">
       ${head('🍿', '追剧清单', '豆瓣推荐 · 手动添加 · 精简视图')}
       <div class="rec-bar">
-        <button class="btn btn-ghost btn-sm" id="s-toggle-rec">🔥 豆瓣实时热门（每日更新）</button>
+        <button class="btn btn-ghost btn-sm" id="s-toggle-rec">🔥 豆瓣实时热门（每天 09:00 自动更新）</button>
       </div>
-      <div id="s-rec-list" class="rec-grid" style="display:none;"></div>
+      <div id="s-rec-list" class="rec-grid" style="display:grid;"></div>
       <hr class="divider">
       <div class="fold">
         <div class="fold-head" onclick="this.nextElementSibling.classList.toggle('collapsed')">➕ 添加剧集 <span class="fold-arrow">▾</span></div>
@@ -2784,23 +2784,35 @@ RENDERERS.shows = async function () {
   };
   async function loadRecommend() {
     const box = document.getElementById('s-rec-list');
-    box.innerHTML = `<div style="color:var(--text-light);font-size:13px;padding:10px;">加载豆瓣实时热门中...</div>`;
-    const recs = await getDoubanHot();
-    if (!recs.length) { box.innerHTML = `<div class="empty">暂无更新（需在「设置-同步」配置同步服务器，每天 09:00 自动刷新）</div>`; return; }
-    box.innerHTML = recs.map((r, i) => `
-      <div class="rec-card">
-        <div class="rec-info">
-          <div class="rec-name">${i + 1}. ${esc(r.name)}</div>
-          <div class="rec-rate">${esc(r.type || '影视')} · 豆瓣热门</div>
-        </div>
-        <button class="btn btn-primary btn-sm" data-rec="${i}">＋ 收藏</button>
-      </div>`).join('');
-    box.querySelectorAll('[data-rec]').forEach(b => b.onclick = async () => {
-      const r = recs[b.dataset.rec];
-      await api('/api/shows', 'POST', { name: r.name, type: r.type || '剧集', status: '想看', source: '豆瓣热门' });
-      toast('✅ 已收藏'); load();
-    });
+    const ts = parseInt(localStorage.getItem(SHOWS_REC_TS) || '0', 10);
+    const when = ts ? '更新于 ' + new Date(ts).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }) : '';
+    const renderRec = (recs, note) => {
+      if (!recs.length) {
+        box.innerHTML = `<div class="empty">暂无更新（需在「设置-同步」配置同步服务器，每天 09:00 自动刷新）</div>`;
+        return;
+      }
+      box.innerHTML = recs.map((r, i) => `
+        <div class="rec-card">
+          <div class="rec-info">
+            <div class="rec-name">${i + 1}. ${esc(r.name)}</div>
+            <div class="rec-rate">${esc(r.type || '影视')} · 豆瓣热门</div>
+          </div>
+          <button class="btn btn-primary btn-sm" data-rec="${i}">＋ 收藏</button>
+        </div>`).join('') + `<div style="font-size:11px;color:var(--text-light);text-align:center;margin-top:8px;">🔥 豆瓣实时热门 · ${note || when || '每天 09:00 自动更新'}</div>`;
+      box.querySelectorAll('[data-rec]').forEach(b => b.onclick = async () => {
+        const r = recs[b.dataset.rec];
+        const cur = await api('/api/shows');
+        if (cur.some(x => (x.name || '').trim() === (r.name || '').trim())) { toast('已在清单里 📌'); return; }
+        await api('/api/shows', 'POST', { name: r.name, type: r.type || '剧集', status: '想看', source: '豆瓣热门' });
+        toast('✅ 已收藏到清单'); load();
+      });
+    };
+    // 先展示本地缓存（秒开），再按需向同步服务器刷新最新热门
+    renderRec(cachedDoubanRec(), when);
+    const updated = await refreshDoubanRec(false);
+    if (updated) renderRec(cachedDoubanRec(), '刚刚已更新');
   }
+  _showsRecLoader = loadRecommend;
   async function load() {
     const items = await api('/api/shows');
     const list = document.getElementById('s-list');
@@ -2823,6 +2835,7 @@ RENDERERS.shows = async function () {
     list.querySelectorAll('[data-edit]').forEach(b => b.onclick = () => openShowsEditor(b.dataset.edit));
     list.querySelectorAll('[data-watch]').forEach(b => b.onclick = () => openWatchModal(b.dataset.watch));
   }
+  loadRecommend();
   load();
 };
 
@@ -2836,6 +2849,50 @@ async function getDoubanHot() {
     return Array.isArray(j) ? j : [];
   } catch (e) { return []; }
 }
+
+// ── 豆瓣热门：本地缓存 + 每日 09:00 自动刷新 ──
+const SHOWS_REC_CACHE = 'mm_shows_rec';
+const SHOWS_REC_TS = 'mm_shows_rec_ts';
+let _showsRecLoader = null;     // 由 RENDERERS.shows 注入，刷新后重绘面板
+let _recFetching = false;
+function _todayNineTs() {
+  const n = new Date();
+  return new Date(n.getFullYear(), n.getMonth(), n.getDate(), 9, 0, 0, 0).getTime();
+}
+function _recStale() {
+  const ts = parseInt(localStorage.getItem(SHOWS_REC_TS) || '0', 10);
+  const nine = _todayNineTs();
+  // 已过今天 09:00，且上次刷新早于今天 09:00 → 需要刷新（每日一次）
+  return Date.now() >= nine && ts < nine;
+}
+function cachedDoubanRec() {
+  try { return JSON.parse(localStorage.getItem(SHOWS_REC_CACHE) || '[]'); } catch (e) { return []; }
+}
+async function refreshDoubanRec(force) {
+  if (_recFetching) return false;
+  if (!force && !_recStale()) return false;
+  _recFetching = true;
+  try {
+    const recs = await getDoubanHot();
+    if (recs && recs.length) {
+      localStorage.setItem(SHOWS_REC_CACHE, JSON.stringify(recs));
+      localStorage.setItem(SHOWS_REC_TS, String(Date.now()));
+      return true;
+    }
+  } catch (e) { /* 保留旧缓存 */ }
+  finally { _recFetching = false; }
+  return false;
+}
+async function scheduleDoubanRec() {
+  const updated = await refreshDoubanRec(false);
+  if (updated && typeof _showsRecLoader === 'function') _showsRecLoader();
+}
+// 启动即检一次；之后每分钟检查是否跨过 09:00，自动抓取最新热门
+scheduleDoubanRec();
+setInterval(scheduleDoubanRec, 60000);
+// 测试钩子
+window.__showsRec = { refresh: refreshDoubanRec, cached: cachedDoubanRec, stale: _recStale, getDoubanHot };
+
 async function openShowsEditor(id) {
   const items = await api('/api/shows');
   const it = items.find(x => x.id === id); if (!it) return;
