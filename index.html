@@ -1663,24 +1663,37 @@ let _pushTimer = null;
 function schedulePush() { if (_pushTimer) clearTimeout(_pushTimer); _pushTimer = setTimeout(pushSync, 800); }
 function updateSyncStatus(txt) { const el = document.getElementById('sync-status'); if (el) el.textContent = txt; }
 async function pushSync() {
-  const s = getSync(); if (!s.enabled || !s.url) return;
+  const s = getSync(); if (!s.enabled || !s.url) return false;
   try {
     const data = syncSnapshot();
     const r = await fetch(s.url.replace(/\/$/, '') + '/sync', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ sid: s.sid, data, rev: s.rev })
     });
-    if (r.status === 409) { await pullSync(true); return; }
+    if (r.status === 409) { await pullSync(true); return true; }
+    if (!r.ok) { updateSyncStatus('同步失败：服务器返回 ' + r.status + '（地址或路径不对）'); return false; }
     const j = await r.json();
     if (j && j.rev != null) { s.rev = j.rev; setSync(s); }
     s.last = Date.now(); setSync(s);
     updateSyncStatus('已同步 ' + new Date().toLocaleTimeString());
-  } catch (e) { updateSyncStatus('同步失败：' + (e.message || '网络错误')); }
+    return true;
+  } catch (e) {
+    let msg = e.message || '网络错误';
+    // 混合内容：https 页面无法请求 http 服务器，浏览器直接拦截
+    if (location.protocol === 'https:' && /^http:\/\//.test(s.url)) {
+      msg = '混合内容被拦截：前端是 https，同步服务器也需 https（反向代理配证书 / Cloudflare Tunnel）';
+    } else if (/Failed to fetch/i.test(msg)) {
+      msg = '无法连接服务器（地址错误 / 服务未启动 / 跨域）';
+    }
+    updateSyncStatus('同步失败：' + msg);
+    return false;
+  }
 }
 async function pullSync(afterPush) {
   const s = getSync(); if (!s.enabled || !s.url) return;
   try {
     const r = await fetch(s.url.replace(/\/$/, '') + '/sync?sid=' + encodeURIComponent(s.sid));
+    if (!r.ok) return;
     const j = await r.json();
     if (j && j.rev != null && j.rev > s.rev) {
       syncRestore(j.data); s.rev = j.rev; s.last = Date.now(); setSync(s);
@@ -1867,9 +1880,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (s.enabled && s.url) pushSync();
   });
   document.getElementById('sync-url').addEventListener('change', (e) => { const s = getSync(); s.url = e.target.value.trim(); setSync(s); });
-  document.getElementById('sync-now').addEventListener('click', () => {
+  document.getElementById('sync-now').addEventListener('click', async () => {
     const s = getSync(); if (!s.url) { toast('请先填写同步服务器地址'); return; }
-    if (!s.sid) s.sid = uid(); setSync(s); pushSync();
+    if (!s.sid) s.sid = uid(); setSync(s);
+    toast('同步中…');
+    const ok = await pushSync();
+    const st = document.getElementById('sync-status');
+    if (ok) toast('✅ 已同步');
+    else toast('⚠️ ' + (st ? st.textContent.replace('同步失败：', '') : '同步失败'));
   });
   // 同步配对码：复制本机码 / 绑定对方码
   document.getElementById('sid-copy').addEventListener('click', () => {
