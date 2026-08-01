@@ -504,6 +504,9 @@ body {
 .rec-name { font-size: 13px; font-weight: 700; color: var(--text); line-height: 1.4; }
 .rec-rate { font-size: 12px; color: #cf8085; margin-top: 4px; font-weight: 700; }
 .rec-ep { font-size: 11px; color: var(--text-light); margin-top: 2px; }
+.rec-desc { font-size: 12px; color: var(--text); line-height: 1.6; margin-top: 6px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.rec-actions { display: flex; gap: 8px; margin-top: 8px; }
+.rec-actions .btn { flex: 1; font-size: 12px; padding: 6px 0; }
 .upload-label { display: inline-flex; align-items: center; gap: 5px; padding: 10px 16px; background: var(--pink-soft); border-radius: var(--radius-sm); color: var(--pink); font-size: 13px; font-weight: 700; cursor: pointer; transition: all var(--transition); }
 .upload-label:hover { background: var(--pink-bg); }
 .rec-tab.active { background: var(--pink); color: #fff; }
@@ -2801,9 +2804,16 @@ RENDERERS.shows = async function () {
   const el = document.getElementById('content-area');
   el.innerHTML = `
     <div class="page-card">
-      ${head('🍿', '追剧清单', '豆瓣推荐 · 手动添加 · 精简视图')}
+      ${head('🍿', '追剧清单', '每天 09:00 更新豆瓣热门')}
       <div class="rec-bar">
-        <button class="btn btn-ghost btn-sm" id="s-toggle-rec">🔥 豆瓣实时热门（每天 09:00 自动更新）</button>
+        <span class="rec-label" id="s-rec-info">豆瓣热门榜 · 实时采集</span>
+        <button class="btn btn-ghost btn-sm" id="s-refresh-btn">↻ 立即刷新</button>
+      </div>
+      <!-- 分类标签 -->
+      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+        <button class="filter-chip active" data-kind="tv" data-tag="热门">热门剧集</button>
+        <button class="filter-chip" data-kind="movie" data-tag="热门">热门电影</button>
+        <button class="filter-chip" data-kind="tv" data-tag="综艺">热门综艺</button>
       </div>
       <div id="s-rec-list" class="rec-grid" style="display:grid;"></div>
       <hr class="divider">
@@ -2820,12 +2830,25 @@ RENDERERS.shows = async function () {
       <ul class="item-list" id="s-list"></ul>
     </div>`;
   enterToSubmit('s-add');
-  document.getElementById('s-toggle-rec').onclick = () => {
-    const l = document.getElementById('s-rec-list');
-    const show = l.style.display === 'none';
-    l.style.display = show ? 'grid' : 'none';
-    if (show) loadRecommend();
+
+  let _currentKind = 'tv', _currentTag = '热门';
+
+  // 分类切换
+  el.querySelectorAll('.filter-chip').forEach(chip => {
+    chip.onclick = async function () {
+      el.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+      this.classList.add('active');
+      _currentKind = this.dataset.kind;
+      _currentTag = this.dataset.tag;
+      await loadRecommend(true);
+    };
+  });
+
+  // 立即刷新
+  document.getElementById('s-refresh-btn').onclick = async () => {
+    await loadRecommend(true);
   };
+
   document.getElementById('s-add').onclick = async function () {
     const name = document.getElementById('s-name').value.trim();
     if (!name) { toast('请输入剧名'); return; }
@@ -2837,44 +2860,81 @@ RENDERERS.shows = async function () {
       } catch (e) { toast(e.message); }
     });
   };
-  async function loadRecommend() {
+
+  async function loadRecommend(forceRefresh) {
     const box = document.getElementById('s-rec-list');
-    const ts = parseInt(localStorage.getItem(SHOWS_REC_TS) || '0', 10);
-    const when = ts ? '更新于 ' + new Date(ts).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }) : '';
-    const renderRec = (recs, note) => {
-      if (!recs.length) {
-        box.innerHTML = `<div class="empty">暂无更新（需在「设置-同步」配置同步服务器，每天 09:00 自动刷新）</div>`;
-        return;
-      }
-      box.innerHTML = recs.map((r, i) => `
-        <div class="rec-card">
-          <div class="rec-info">
-            <div class="rec-name">${i + 1}. ${esc(r.name)}</div>
-            <div class="rec-rate">${esc(r.type || '影视')} · 豆瓣热门${r.rate ? ` · ⭐ ${esc(String(r.rate))}` : ''}</div>
-          </div>
-          <button class="btn btn-primary btn-sm" data-rec="${i}">＋ 收藏</button>
-        </div>`).join('') + `<div style="font-size:11px;color:var(--text-light);text-align:center;margin-top:8px;">🔥 豆瓣实时热门 · ${note || when || '每天 09:00 自动更新'}</div>`;
-      box.querySelectorAll('[data-rec]').forEach(b => b.onclick = async () => {
-        const r = recs[b.dataset.rec];
-        const cur = await api('/api/shows');
-        if (cur.some(x => (x.name || '').trim() === (r.name || '').trim())) { toast('已在清单里 📌'); return; }
-        await api('/api/shows', 'POST', { name: r.name, type: r.type || '剧集', status: '想看', source: '豆瓣热门' });
-        toast('✅ 已收藏到清单'); load();
+    const infoEl = document.getElementById('s-rec-info');
+    box.innerHTML = '<div style="color:var(--text-light);font-size:13px;padding:20px;text-align:center;">加载中…</div>';
+
+    let recs = [];
+    // 优先从同步服务器按分类拉取
+    try {
+      recs = await getDoubanHotKind(_currentKind, _currentTag);
+    } catch (e) { /* fallback to cache */ }
+
+    // 服务器无数据时用本地缓存
+    if (!recs.length) {
+      recs = cachedDoubanRec().filter(r => {
+        if (_currentTag === '综艺') return r.type === '剧集'; // 综艺暂归入剧集类展示
+        if (_currentKind === 'tv') return r.type === '剧集';
+        if (_currentKind === 'movie') return r.type === '电影';
+        return true;
       });
-    };
-    // 先展示本地缓存（秒开），再按需向同步服务器刷新最新热门
-    renderRec(cachedDoubanRec(), when);
-    const updated = await refreshDoubanRec(false);
-    if (updated) renderRec(cachedDoubanRec(), '刚刚已更新');
+    }
+
+    // 更新信息栏时间戳
+    const ts = parseInt(localStorage.getItem(SHOWS_REC_TS) || '0', 10);
+    const when = ts ? ' · 更新于 ' + new Date(ts).toLocaleString('zh-CN', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }) : '';
+    infoEl.textContent = `豆瓣${_currentTag}榜 · 实时采集${when} · 每天 09:00 自动刷新`;
+
+    if (!recs.length) {
+      box.innerHTML = `<div class="empty">暂无数据（需在「设置-同步」配置同步服务器）</div>`;
+      return;
+    }
+
+    // 渲染富卡片（海报 + 标题评分 + 剧集信息 + 收藏/详情按钮）
+    box.innerHTML = recs.map((r, i) => `
+      <div class="rec-card" style="animation-delay:${i * 0.05}s">
+        ${r.cover ? `<img src="${esc(r.cover)}" class="rec-cover" onerror="this.style.display='none'" loading="lazy" />` : ''}
+        <div class="rec-info">
+          <div class="rec-name">${esc(r.name || r.title)}</div>
+          <div class="rec-rate">${r.rate ? '⭐ ' + esc(String(r.rate)) : '暂无评分'}${r.episodes_info ? ' · ' + esc(r.episodes_info) : ''}</div>
+          ${r.desc ? `<div class="rec-desc">${esc(r.desc)}</div>` : ''}
+        </div>
+        <div class="rec-actions">
+          <button class="btn btn-primary btn-sm" data-rec="${i}" data-action="fav">＋ 加入收藏夹</button>
+          ${r.url ? `<button class="btn btn-ghost btn-sm" data-url="${esc(r.url)}" data-action="detail">豆瓣详情</button>` : ''}
+        </div>
+      </div>`).join('');
+
+    // 收藏按钮
+    box.querySelectorAll('[data-action="fav"]').forEach(b => b.onclick = async function() {
+      const r = recs[this.dataset.rec];
+      const cur = await api('/api/shows');
+      if (cur.some(x => (x.name || '').trim() === (r.name || r.title || '').trim())) { toast('已在收藏夹 📌'); return; }
+      await api('/api/shows', 'POST', { name: r.name || r.title, type: r.type || '剧集', status: '想看', source: r.source || '豆瓣热门' });
+      toast('✅ 已加入收藏夹'); load();
+    });
+
+    // 豆瓣详情：新窗口打开
+    box.querySelectorAll('[data-action="detail"]').forEach(b => b.onclick = function() {
+      window.open(this.dataset.url, '_blank');
+    });
   }
-  _showsRecLoader = loadRecommend;
+
+  _showsRecLoader = (force) => loadRecommend(force);
+
   async function load() {
     const items = await api('/api/shows');
     const list = document.getElementById('s-list');
-    if (!items.length) { list.innerHTML = `<div class="empty">剧荒了？点上方获取推荐 🎬</div>`; return; }
-    const groups = groupByMonth(items, it => it.created);
-    const renderItem = (it) => `
-      <li class="item-card">
+    const favCount = items.filter(x => x.status === '追更' || x.status === '想看').length;
+    // 更新 footer
+    const footer = el.querySelector('#s-rec-list + hr + .fold') || null;
+
+    if (!items.length) { list.innerHTML = `<div class="empty">我的收藏夹 · 在追 0 部</div>`; return; }
+    list.innerHTML = `<div style="font-size:12px;color:var(--text-light);margin-bottom:8px;">我的收藏夹 · 在追 ${favCount} 部</div>` +
+      items.map((it, i) => `
+      <li class="item-card" style="animation-delay:${i * 0.04}s">
         <div class="item-main">
           <div class="item-title">${esc(it.name)} <span class="tag tag-purple">${esc(it.status)}</span></div>
           <div class="item-sub">${it.type ? `<span class="tag tag-blue">${esc(it.type)}</span>` : ''}${it.platform ? `<span class="tag">${esc(it.platform)}</span>` : ''}${it.source ? `<span class="tag" style="background:var(--cream);color:var(--text-light)">${esc(it.source)}</span>` : ''}${it.rating ? `<span class="tag tag-yellow">⭐ ${it.rating}</span>` : ''}</div>
@@ -2884,13 +2944,14 @@ RENDERERS.shows = async function () {
           <button class="edit-btn" data-edit="${it.id}" title="编辑">✏️</button>
           <button class="del-btn" data-del="${it.id}">🗑</button>
         </div>
-      </li>`;
-    list.innerHTML = monthSections(groups, renderItem);
+      </li>`).join('');
     list.querySelectorAll('[data-del]').forEach(b => b.onclick = async () => { await api('/api/shows?id=' + b.dataset.del, 'DELETE'); load(); });
     list.querySelectorAll('[data-edit]').forEach(b => b.onclick = () => openShowsEditor(b.dataset.edit));
     list.querySelectorAll('[data-watch]').forEach(b => b.onclick = () => openWatchModal(b.dataset.watch));
   }
-  loadRecommend();
+
+  // 进入即加载当前分类
+  await loadRecommend(false);
   load();
 };
 
@@ -2900,6 +2961,21 @@ async function getDoubanHot() {
   if (!s.enabled || !s.url) return [];
   try {
     const r = await fetch(s.url.replace(/\/$/, '') + '/shows/recommend');
+    const j = await r.json();
+    return Array.isArray(j) ? j : [];
+  } catch (e) { return []; }
+}
+
+/** 按分类(kind=tv/movie, tag=热门/最新/高分/华语/综艺)从同步服务器拉取豆瓣热门 */
+async function getDoubanHotKind(kind, tag) {
+  const s = getSync();
+  if (!s.enabled || !s.url) return [];
+  try {
+    const base = s.url.replace(/\/$/, '');
+    const params = new URLSearchParams();
+    if (kind) params.set('kind', kind);
+    if (tag) params.set('tag', tag);
+    const r = await fetch(base + '/shows/recommend?' + params.toString());
     const j = await r.json();
     return Array.isArray(j) ? j : [];
   } catch (e) { return []; }
