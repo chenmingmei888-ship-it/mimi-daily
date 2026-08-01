@@ -592,6 +592,7 @@ body {
 
 /* ── 倒计时 ── */
 .cd-list { display: flex; flex-direction: column; gap: 13px; }
+.cd-section-title { margin: 22px 0 10px; font-size: 13px; font-weight: 700; color: var(--text-light); letter-spacing: .06em; }
 .cd-card { display: flex; align-items: center; gap: 16px; background: var(--cream); border-radius: var(--radius-sm); padding: 18px 22px; border: 1px solid var(--line); border-left: 4px solid var(--pink); transition: all var(--transition); animation: itemIn .45s ease backwards; }
 .cd-card:hover { background: #fff; box-shadow: var(--shadow-hover); transform: translateX(5px); }
 .cd-icon { font-size: 30px; flex-shrink: 0; }
@@ -982,6 +983,7 @@ body {
 /* 本地存储版 api 适配层 —— 替换原 Flask 的 api()，复用全部渲染逻辑 */
 const LS = {
   weight: 'mm_weight', target: 'mm_weight_target', anniv: 'mm_anniv', todos: 'mm_todos',
+  countdown: 'mm_countdown',
   shows: 'mm_shows', reviews: 'mm_reviews', notes: 'mm_notes', mood: 'mm_mood',
   travel: 'mm_travel', fortune: 'mm_fortune',
   modules: 'mm_modules', sync: 'mm_sync', checkin: 'mm_checkin', style: 'mm_style'
@@ -1100,6 +1102,7 @@ function computeAnniv() {
       const cd = Math.round((pdate(it.date) - pdate(today)) / 86400000);
       it.countdown = cd; it.passed = cd < 0; it.abs_days = Math.abs(cd);
       it.total_days = Math.round((pdate(today) - pdate(it.date)) / 86400000);
+      if (it.start_date) { try { it.start_days = Math.round((pdate(today) - pdate(it.start_date)) / 86400000); } catch (e) { it.start_days = null; } } else it.start_days = null;
       if (recurringCats.includes(it.category)) {
         const [y, m, d] = it.date.split('-').map(Number);
         let next = new Date(t0.getFullYear(), m - 1, d);
@@ -1171,7 +1174,14 @@ function computeCountdown() {
   let me; if (today.getMonth() === 11) me = new Date(today.getFullYear(), 11, 31); else me = new Date(today.getFullYear(), today.getMonth() + 1, 0);
   const month_end = { date: iso(me), days: Math.round((me - today) / 86400000) };
   const ye = new Date(today.getFullYear(), 11, 31); const year_end = { date: iso(ye), days: Math.round((ye - today) / 86400000) };
-  return { spring_festival: sf, next_holiday: nh, weekend, month_end, year_end };
+  // 用户手动添加的倒计时条目
+  const customRaw = lsGet(LS.countdown, []) || [];
+  const custom = customRaw.map(it => {
+    let days = null;
+    try { days = Math.round((pdate(it.date) - today) / 86400000); } catch (e) { days = null; }
+    return { ...it, days };
+  }).sort((a, b) => (a.days == null ? 99999 : a.days) - (b.days == null ? 99999 : b.days));
+  return { spring_festival: sf, next_holiday: nh, weekend, month_end, year_end, custom };
 }
 function computeBriefing() {
   const today = localToday();
@@ -1250,7 +1260,12 @@ async function route(path, method, q, body) {
     const s = lsGet(LS.fortune, 'aries'); return { ok: true, data: computeFortune(s) };
   }
   // 倒计时
-  if (path === '/api/countdown') return { ok: true, data: computeCountdown() };
+  if (path === '/api/countdown') {
+    if (method === 'GET') return { ok: true, data: computeCountdown() };
+    if (method === 'POST') { const name = (body.name || '').trim(); if (!name || !body.date) return { ok: false, message: 'name and date required' }; return { ok: true, data: addItem('countdown', { name, date: body.date, note: body.note || '', icon: body.icon || '⏳' }) }; }
+    if (method === 'PUT') { if (!body.id) return { ok: false, message: 'id required' }; return { ok: true, data: updItem('countdown', body.id, body) }; }
+    if (method === 'DELETE') { delItem('countdown', q.get('id')); return { ok: true, data: null }; }
+  }
   // 月历
   if (path === '/api/calendar') return { ok: true, data: computeCalendar(parseInt(q.get('year')), parseInt(q.get('month'))) };
   // 播报
@@ -1271,7 +1286,7 @@ async function route(path, method, q, body) {
   // 纪念日
   if (path === '/api/anniv') {
     if (method === 'GET') return { ok: true, data: computeAnniv() };
-    if (method === 'POST') { const name = (body.name || '').trim(); if (!name || !body.date) return { ok: false, message: 'name and date required' }; return { ok: true, data: addItem('anniv', { name, date: body.date, category: body.category || '其他', remind_days: parseInt(body.remind_days || 0), note: body.note || '' }) }; }
+    if (method === 'POST') { const name = (body.name || '').trim(); if (!name || !body.date) return { ok: false, message: 'name and date required' }; return { ok: true, data: addItem('anniv', { name, date: body.date, category: body.category || '其他', remind_days: parseInt(body.remind_days || 0), note: body.note || '', start_date: body.start_date || '' }) }; }
     if (method === 'DELETE') { delItem('anniv', q.get('id')); return { ok: true, data: null }; }
   }
   if (path.startsWith('/api/anniv/')) { const id = path.split('/').pop(); return { ok: true, data: updItem('anniv', id, body) }; }
@@ -2218,7 +2233,21 @@ RENDERERS.countdown = async function () {
       </div>`;
     el.innerHTML = `
       <div class="page-card">
-        ${head('⏳', '倒计时', '节假日 / 过年 / 周末 / 月末 倒数')}
+        ${head('⏳', '倒计时', '手动添加你的专属倒计时 · 节假日 / 周末 / 月末 自动参考')}
+        <div class="fold">
+          <div class="fold-head" onclick="this.nextElementSibling.classList.toggle('collapsed')">➕ 添加倒计时 <span class="fold-arrow">▾</span></div>
+          <div class="fold-body collapsed">
+            <div class="form-row">
+              <input class="input" id="c-name" placeholder="名称（如：去旅行 / 考试 / 见面）" />
+              <input class="input" id="c-date" type="date" style="max-width:170px;" />
+              <input class="input" id="c-icon" placeholder="图标" style="max-width:64px;" value="⏳" />
+              <button class="btn btn-primary" id="c-add">添加</button>
+            </div>
+            <input class="input" id="c-note" placeholder="备注（可选）" style="margin-bottom:14px;" />
+          </div>
+        </div>
+        <ul class="item-list" id="c-list"></ul>
+        <div class="cd-section-title">📌 固定参考</div>
         <div class="cd-list">
           ${card('🧧', '过年', cd.spring_festival.name, cd.spring_festival.days, cd.spring_festival.date, '#E06B70', 0, pct(dayOfYear, yearTotal))}
           ${card('🏖️', '下个假期', cd.next_holiday.name, cd.next_holiday.days, cd.next_holiday.date, '#5A9BC0', 1, pct(dayOfYear, yearTotal))}
@@ -2226,7 +2255,79 @@ RENDERERS.countdown = async function () {
           ${card('📅', '距月末', '本月最后一天', cd.month_end.days, cd.month_end.date, '#9275B8', 3, pct(now.getDate(), monthLast))}
           ${card('🎉', '距年底', '12月31日', cd.year_end.days, cd.year_end.date, '#A8922E', 4, pct(dayOfYear, yearTotal))}
         </div>
+        <div class="modal-mask" id="c-modal" style="display:none;">
+          <div class="modal-box">
+            <div class="modal-title">✏️ 编辑倒计时</div>
+            <input class="input" id="c-e-name" placeholder="名称" />
+            <input class="input" id="c-e-date" type="date" />
+            <input class="input" id="c-e-icon" placeholder="图标" style="max-width:80px;" />
+            <input class="input" id="c-e-note" placeholder="备注" />
+            <div class="modal-actions">
+              <button class="btn btn-ghost btn-sm" id="c-e-cancel">取消</button>
+              <button class="btn btn-primary btn-sm" id="c-e-save">保存</button>
+            </div>
+          </div>
+        </div>
       </div>`;
+    enterToSubmit('c-add');
+    let current = [];
+    let editId = null;
+    async function load() {
+      const data = await api('/api/countdown');
+      current = data.custom || [];
+      const list = document.getElementById('c-list');
+      if (!current.length) { list.innerHTML = `<div class="empty">还没有专属倒计时，点上方“添加倒计时”记录想期待的日子吧 ⏳</div>`; return; }
+      list.innerHTML = current.map((it, i) => {
+        const d = it.days;
+        const daysTxt = d == null ? '—' : (d > 0 ? `<strong>${d}</strong> 天后` : (d === 0 ? '就是今天 ✨' : `已过去 <strong>${Math.abs(d)}</strong> 天`));
+        return `<li class="item-card" style="animation-delay:${i * 0.04}s">
+          <div class="item-main">
+            <div class="item-title">${(it.icon || '⏳')} ${esc(it.name)}</div>
+            <div class="item-sub"><span class="tag tag-blue">${it.date}</span></div>
+            <div class="item-meta">⏳ ${daysTxt}</div>
+            ${it.note ? `<div class="item-meta">📝 ${esc(it.note)}</div>` : ''}
+          </div>
+          <button class="edit-btn" data-edit="${it.id}" title="编辑">✏️</button>
+          <button class="del-btn" data-del="${it.id}">🗑</button>
+        </li>`;
+      }).join('');
+      list.querySelectorAll('[data-del]').forEach(b => b.onclick = async () => { await api('/api/countdown?id=' + b.dataset.del, 'DELETE'); load(); });
+      list.querySelectorAll('[data-edit]').forEach(b => b.onclick = () => openEdit(current.find(x => x.id === b.dataset.edit)));
+    }
+    function openEdit(it) {
+      editId = it.id;
+      document.getElementById('c-e-name').value = it.name;
+      document.getElementById('c-e-date').value = it.date;
+      document.getElementById('c-e-icon').value = it.icon || '⏳';
+      document.getElementById('c-e-note').value = it.note || '';
+      document.getElementById('c-modal').style.display = 'flex';
+    }
+    document.getElementById('c-add').onclick = async function () {
+      const name = document.getElementById('c-name').value.trim();
+      const date = document.getElementById('c-date').value;
+      if (!name || !date) { toast('请输入名称和日期'); return; }
+      await withBtn(this, async () => {
+        try {
+          await api('/api/countdown', 'POST', { name, date, note: document.getElementById('c-note').value, icon: document.getElementById('c-icon').value || '⏳' });
+          ['c-name', 'c-date', 'c-note'].forEach(id => document.getElementById(id).value = '');
+          toast('✅ 已添加'); load();
+        } catch (e) { toast(e.message); }
+      });
+    };
+    document.getElementById('c-e-cancel').onclick = () => { document.getElementById('c-modal').style.display = 'none'; };
+    document.getElementById('c-e-save').onclick = async function () {
+      const name = document.getElementById('c-e-name').value.trim();
+      const d = document.getElementById('c-e-date').value;
+      if (!name || !d) { toast('请输入名称和日期'); return; }
+      await withBtn(this, async () => {
+        try {
+          await api('/api/countdown', 'PUT', { id: editId, name, date: d, note: document.getElementById('c-e-note').value, icon: document.getElementById('c-e-icon').value || '⏳' });
+          document.getElementById('c-modal').style.display = 'none';
+          toast('✅ 已更新'); load();
+        } catch (e) { toast(e.message); }
+      });
+    };
+    load();
   } catch (e) { el.innerHTML = `<div class="empty">加载失败</div>`; }
 };
 
@@ -2271,7 +2372,8 @@ RENDERERS.anniv = async function () {
           <div class="form-row">
             <input class="input" id="a-name" placeholder="名称（恋爱周年/结婚纪念日/生日）" />
             <select class="select" id="a-cat" style="max-width:110px;"><option>恋爱</option><option>结婚</option><option>生日</option><option>其他</option></select>
-            <input class="input" id="a-date" type="date" style="max-width:160px;" />
+            <input class="input" id="a-date" type="date" style="max-width:160px;" title="纪念日日期" />
+            <input class="input" id="a-start" type="date" style="max-width:160px;" title="起始日：用于计算已共度总天数（如恋爱/结婚起始日）" placeholder="起始日(算总天数)" />
             <input class="input" id="a-remind" type="number" placeholder="提前提醒天" style="max-width:120px;" />
             <button class="btn btn-primary" id="a-add">添加</button>
           </div>
@@ -2284,7 +2386,8 @@ RENDERERS.anniv = async function () {
           <div class="modal-title">✏️ 编辑纪念日</div>
           <input class="input" id="a-e-name" placeholder="名称" />
           <select class="select" id="a-e-cat"><option>恋爱</option><option>结婚</option><option>生日</option><option>其他</option></select>
-          <input class="input" id="a-e-date" type="date" />
+          <input class="input" id="a-e-date" type="date" title="纪念日日期" />
+          <input class="input" id="a-e-start" type="date" title="起始日：用于计算已共度总天数（如恋爱/结婚起始日）" placeholder="起始日(算总天数)" />
           <input class="input" id="a-e-remind" type="number" placeholder="提前提醒天" />
           <input class="input" id="a-e-note" placeholder="备注" />
           <div class="modal-actions">
@@ -2303,7 +2406,7 @@ RENDERERS.anniv = async function () {
     if (!name || !date) { toast('请输入名称和日期'); return; }
     await withBtn(this, async () => {
       try {
-        await api('/api/anniv', 'POST', { name, category: document.getElementById('a-cat').value, date, remind_days: parseInt(document.getElementById('a-remind').value) || 0, note: document.getElementById('a-note').value });
+        await api('/api/anniv', 'POST', { name, category: document.getElementById('a-cat').value, date, start_date: document.getElementById('a-start').value || '', remind_days: parseInt(document.getElementById('a-remind').value) || 0, note: document.getElementById('a-note').value });
         ['a-name', 'a-date', 'a-remind', 'a-note'].forEach(id => document.getElementById(id).value = '');
         toast('✅ 已录入'); load();
       } catch (e) { toast(e.message); }
@@ -2316,7 +2419,7 @@ RENDERERS.anniv = async function () {
     if (!name || !d) { toast('请输入名称和日期'); return; }
     await withBtn(this, async () => {
       try {
-        await api('/api/anniv/' + currentEditId, 'PUT', { name, category: document.getElementById('a-e-cat').value, date: d, remind_days: parseInt(document.getElementById('a-e-remind').value) || 0, note: document.getElementById('a-e-note').value });
+        await api('/api/anniv/' + currentEditId, 'PUT', { name, category: document.getElementById('a-e-cat').value, date: d, start_date: document.getElementById('a-e-start').value || '', remind_days: parseInt(document.getElementById('a-e-remind').value) || 0, note: document.getElementById('a-e-note').value });
         document.getElementById('a-modal').style.display = 'none';
         toast('✅ 已更新'); load();
       } catch (e) { toast(e.message); }
@@ -2327,6 +2430,7 @@ RENDERERS.anniv = async function () {
     document.getElementById('a-e-name').value = it.name;
     document.getElementById('a-e-cat').value = it.category || '其他';
     document.getElementById('a-e-date').value = it.date;
+    document.getElementById('a-e-start').value = it.start_date || '';
     document.getElementById('a-e-remind').value = it.remind_days || '';
     document.getElementById('a-e-note').value = it.note || '';
     document.getElementById('a-modal').style.display = 'flex';
@@ -2337,12 +2441,16 @@ RENDERERS.anniv = async function () {
     if (!currentAnniv.length) { list.innerHTML = `<div class="empty">暂无记录，添加第一个纪念日吧 💌</div>`; return; }
     list.innerHTML = currentAnniv.map((it, i) => {
       let cd = it.countdown;
-      let cdTxt = cd === null ? '—' : (cd >= 0 ? `还有 <strong>${cd}</strong> 天` : `已过 <strong>${it.abs_days}</strong> 天`);
-      let totalTxt = '';
-      if (it.total_days != null && it.total_days > 0) totalTxt = `<span class="tag tag-mint">💛 已共度 ${it.total_days} 天</span>`;
+      let cdTxt = cd === null ? '—' : (cd > 0 ? `还有 <strong>${cd}</strong> 天到这天` : (cd === 0 ? '✨ 就是今天！' : `已过 <strong>${it.abs_days}</strong> 天`));
+      // “总共多少天”：优先用起始日算真实总时长（如恋爱/结婚起始日），否则用纪念日日期算已走过天数
+      let totalDays = null;
+      if (it.start_days != null && it.start_days >= 0) totalDays = it.start_days;
+      else if (it.total_days != null && it.total_days > 0) totalDays = it.total_days;
+      let totalTxt = totalDays != null ? `<span class="tag tag-mint">💛 已共度 ${totalDays} 天</span>` : '';
       const recurringCats = ['生日', '结婚', '恋爱'];
       let nextTxt = '';
-      if (recurringCats.includes(it.category) && it.next_countdown != null) nextTxt = `<span class="tag tag-yellow">⏳ 距下次${it.category}还有 ${it.next_countdown} 天</span>`;
+      if (recurringCats.includes(it.category) && it.next_countdown != null && it.next_countdown !== it.countdown)
+        nextTxt = `<span class="tag tag-yellow">⏳ 距下次${it.category}还有 ${it.next_countdown} 天</span>`;
       return `<li class="item-card" style="animation-delay:${i * 0.04}s">
         <div class="item-main">
           <div class="item-title">${esc(it.name)} <span class="tag tag-pink">💌 ${it.category}</span> ${totalTxt}</div>
