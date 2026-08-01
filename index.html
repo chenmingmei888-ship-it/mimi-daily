@@ -662,6 +662,7 @@ body {
 .sync-row { display: flex; align-items: center; justify-content: space-between; font-size: 14px; font-weight: 700; margin-bottom: 8px; }
 .sync-status { font-size: 12px; color: var(--text-light); margin: 8px 0; }
 .sync-status:empty { display: none; }
+.sync-hint { font-size: 11.5px; color: var(--text-light); line-height: 1.5; background: var(--cream); border: 1px dashed var(--line); border-radius: 8px; padding: 7px 9px; margin: 4px 0 2px; }
 .sync-btns { display: flex; gap: 8px; flex-wrap: wrap; }
 .pair-box { margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--line); }
 .pair-label { font-size: 12px; font-weight: 800; color: var(--text); margin-bottom: 6px; }
@@ -946,7 +947,8 @@ body {
     <div class="sheet-section">
       <div class="sheet-sub">☁️ 云端同步（多端实时一致）</div>
       <label class="sync-row"><span>开启同步</span><input type="checkbox" id="sync-on"></label>
-      <input class="input" id="sync-url" placeholder="同步服务器地址，如 https://your-host/api" />
+      <input class="input" id="sync-url" placeholder="同步服务器地址，如 https://your-host/api（留空也可）" />
+      <div class="sync-hint">留空也能用：追剧清单默认经浏览器直连豆瓣热门，无需部署服务器；填地址仅用于多端同步。</div>
       <div class="sync-status" id="sync-status">未同步</div>
       <div class="sync-btns">
         <button class="btn btn-primary btn-sm" id="sync-now">立即同步</button>
@@ -1901,9 +1903,26 @@ document.addEventListener('DOMContentLoaded', () => {
     if (ok) toast('✅ 已同步');
     else toast('⚠️ ' + (st ? st.textContent.replace('同步失败：', '') : '同步失败'));
   });
-  // 测试连接：直接探测服务器，返回真实 HTTP 状态 / 网络错误，便于定位问题
+  // 测试连接：无服务器时探测豆瓣直连（零配置），有服务器时探测服务器
   document.getElementById('sync-test').addEventListener('click', async () => {
-    const s = getSync(); if (!s.url) { toast('请先填写同步服务器地址'); return; }
+    const s = getSync();
+    if (!s.url) {
+      updateSyncStatus('测试豆瓣直连中…');
+      try {
+        const recs = await getDoubanDirect('tv', '热门');
+        if (recs.length) {
+          updateSyncStatus('✅ 豆瓣直连正常（零配置），已扒到 ' + recs.length + ' 条热门剧集');
+          toast('✅ 豆瓣直连正常，追剧清单无需服务器');
+        } else {
+          updateSyncStatus('⚠️ 豆瓣直连返回空（代理限流/网络波动，稍后点「↻ 立即刷新」重试）');
+          toast('⚠️ 豆瓣直连暂未返回数据');
+        }
+      } catch (e) {
+        updateSyncStatus('⚠️ 豆瓣直连失败：' + (e.message || '网络错误') + '（无需配置服务器，稍后重试即可）');
+        toast('⚠️ 豆瓣直连失败');
+      }
+      return;
+    }
     const base = s.url.replace(/\/$/, '');
     updateSyncStatus('测试连接中…');
     try {
@@ -2888,7 +2907,7 @@ RENDERERS.shows = async function () {
     infoEl.textContent = `豆瓣${_currentTag}榜 · 实时采集${when} · 浏览器直连，无需服务器`;
 
     if (!recs.length) {
-      box.innerHTML = `<div class="empty">暂无数据（需在「设置-同步」配置同步服务器）</div>`;
+      box.innerHTML = `<div class="empty">暂时没抓到豆瓣数据（网络波动或代理限流，点「↻ 立即刷新」重试即可，无需配置任何服务器）</div>`;
       return;
     }
 
