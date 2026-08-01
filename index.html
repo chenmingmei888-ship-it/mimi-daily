@@ -6,9 +6,8 @@
   <title>💛 米米 Daily</title>
   <meta name="theme-color" content="#FFF9EF">
   <script>
-    // 在 CSS 加载前恢复主题与风格，避免闪烁
-    (function(){var t=localStorage.getItem('mimi-theme');if(t&&t!=='default')document.documentElement.setAttribute('data-theme',t);
-    var s=localStorage.getItem('mm_style');if(s&&s!=='default')document.documentElement.setAttribute('data-style',s);})();
+    // 在 CSS 加载前恢复工作台风格，避免闪烁（15 套完整风格统管配色 + 图标）
+    (function(){var s=localStorage.getItem('mm_style');if(!s||s==='default')s='s1';document.documentElement.setAttribute('data-style',s);})();
   </script>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -93,49 +92,156 @@
 [data-theme="milktea"] { --cream: #FBF6EF; --pink: #C9A87C; --pink-soft: #ECE0CE; --pink-bg: #F5EDE2; --line: #EAE0D2; --shadow: 0 8px 30px rgba(201,168,124,.16); --shadow-hover: 0 14px 40px rgba(201,168,124,.26); }
 [data-theme="lilac"] { --cream: #F7F3FC; --pink: #C9A8E0; --pink-soft: #E6DCF0; --pink-bg: #F2ECF8; --line: #E6DCEF; --shadow: 0 8px 30px rgba(201,168,224,.16); --shadow-hover: 0 14px 40px rgba(201,168,224,.26); }
 
-/* ── 皮肤「风格」维度（与颜色主题正交，通过 data-style 切换）── */
-/* 简约：直角克制、弱阴影、细线条、去装饰 */
-[data-style="minimal"] {
-  --radius: 12px; --radius-sm: 9px; --radius-xs: 7px;
-  --shadow: 0 2px 10px rgba(0,0,0,.05); --shadow-hover: 0 4px 16px rgba(0,0,0,.08); --shadow-sm: 0 1px 6px rgba(0,0,0,.04);
-  --transition: .2s ease; --transition-smooth: .25s ease;
-  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
-}
-[data-style="minimal"] .bg-decor::before,
-[data-style="minimal"] .bg-decor::after { opacity: .22; }
-[data-style="minimal"] #skin-pattern { opacity: 0 !important; }
-[data-style="minimal"] .page-card { border: 1px solid var(--line); }
+/* ── 图标基础样式（SVG 图标，颜色/描边/发光由 --ico* 变量按风格控制）── */
+.app-ico { display: inline-block; vertical-align: middle; color: var(--ico, var(--pink)); flex: none;
+  width: 1.25em; height: 1.25em; stroke: currentColor; stroke-width: var(--ico-w, 2); fill: var(--ico-fill, none);
+  stroke-linecap: var(--ico-cap, round); stroke-linejoin: var(--ico-cap, round); filter: var(--ico-glow, none); transition: all var(--transition); }
+.btn-ico { display: inline-flex; margin-right: 5px; vertical-align: -3px; }
 
-/* 可爱：超圆润、弹跳过渡、彩色阴影、圆体字 */
-[data-style="cute"] {
-  --radius: 30px; --radius-sm: 22px; --radius-xs: 16px;
-  --shadow: 0 12px 34px rgba(232,180,184,.28); --shadow-hover: 0 18px 48px rgba(232,180,184,.4); --shadow-sm: 0 6px 20px rgba(232,180,184,.22);
-  --transition: .38s cubic-bezier(.34,1.56,.64,1); --transition-smooth: .45s cubic-bezier(.34,1.56,.64,1);
-  --font: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Comic Sans MS", "Noto Sans SC", sans-serif;
+/* ── 15 套工作台完整风格（配色 + 图标风格，通过 data-style 切换）── */
+/* 1. 清新蓝绿极简风：线性细线条、填充透明、浅青色、无渐变 */
+[data-style="s1"] {
+  --cream: #D0E8F2; --cream-card: #EDF6FB; --pink: #81C3D7; --pink-soft: #D6EBF4; --pink-bg: #E3F2F8;
+  --text: #2A3132; --text-light: #5C6B6E; --line: #BCDCE8;
+  --blue-soft: #E3F2F8; --mint-soft: #E6F4F0; --purple-soft: #ECEAF8; --yellow-soft: #FBF4DC;
+  --radius: 16px; --radius-sm: 11px; --radius-xs: 8px;
+  --shadow: 0 6px 22px rgba(129,195,215,.18); --shadow-hover: 0 10px 30px rgba(129,195,215,.28); --shadow-sm: 0 3px 12px rgba(129,195,215,.14);
+  --ico: #81C3D7; --ico-w: 1.6; --ico-fill: none; --ico-cap: round; --ico-glow: none;
 }
-[data-style="cute"] .btn { border-radius: 999px; }
-[data-style="cute"] .bg-decor::before,
-[data-style="cute"] .bg-decor::after { opacity: .7; }
-[data-style="cute"] .page-card::before {
-  content: "🌸"; position: absolute; top: 10px; right: 14px; font-size: 18px; opacity: .5; pointer-events: none;
+/* 2. 暗黑科技商务风：实心发光小图标、蓝色微光、几何硬朗 */
+[data-style="s2"] {
+  --cream: #161b22; --cream-card: #21262d; --pink: #58a6ff; --pink-soft: #1f2b3d; --pink-bg: #182230;
+  --text: #f0f6fc; --text-light: #8b98a8; --line: #2d333f;
+  --blue-soft: #1b2a3d; --mint-soft: #16302a; --purple-soft: #241d3a; --yellow-soft: #2e2a1c;
+  --radius: 10px; --radius-sm: 8px; --radius-xs: 6px;
+  --shadow: 0 8px 28px rgba(0,0,0,.5); --shadow-hover: 0 12px 36px rgba(0,0,0,.6); --shadow-sm: 0 4px 16px rgba(0,0,0,.45);
+  --ico: #58a6ff; --ico-w: 1.8; --ico-fill: var(--ico); --ico-cap: square; --ico-glow: drop-shadow(0 0 4px rgba(88,166,255,.75));
 }
-[data-style="cute"] .page-card { position: relative; }
-
-/* 炫酷：深色玻璃拟态、霓虹发光、锐利高对比 */
-[data-style="cool"] {
-  --cream: #16171d; --cream-card: rgba(38,40,52,.72); --text: #f0f2f8; --text-light: #a4a8bb;
-  --pink-bg: rgba(255,255,255,.05); --line: rgba(255,255,255,.1);
-  --blue-soft: rgba(120,160,255,.14); --mint-soft: rgba(90,220,180,.14); --purple-soft: rgba(180,130,255,.14); --yellow-soft: rgba(240,210,120,.14);
-  --radius: 18px; --radius-sm: 13px; --radius-xs: 9px;
-  --shadow: 0 8px 32px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.05); --shadow-hover: 0 12px 40px rgba(0,0,0,.6), 0 0 22px var(--pink);
-  --shadow-sm: 0 4px 18px rgba(0,0,0,.45);
+[data-style="s2"] body { background: radial-gradient(circle at 12% 15%, #1c2738, transparent 45%), radial-gradient(circle at 88% 85%, #16233a, transparent 45%), #161b22; }
+[data-style="s2"] .page-card, [data-style="s2"] .sidebar, [data-style="s2"] .mobile-bar, [data-style="s2"] .bottom-nav, [data-style="s2"] .sheet, [data-style="s2"] .checkin-card { backdrop-filter: blur(12px) saturate(1.1); -webkit-backdrop-filter: blur(12px) saturate(1.1); border: 1px solid rgba(88,166,255,.12); }
+[data-style="s2"] .btn-primary { box-shadow: 0 0 16px rgba(88,166,255,.5); }
+[data-style="s2"] .nav-item.active, [data-style="s2"] .bn-item.active { text-shadow: 0 0 8px rgba(88,166,255,.6); }
+/* 3. 奶油INS暖杏风：圆润粗线条手绘、低饱和暖米、圆角柔和 */
+[data-style="s3"] {
+  --cream: #FFF9F2; --cream-card: #FFEFE0; --pink: #F4B890; --pink-soft: #FBE6D4; --pink-bg: #FFF4EA;
+  --text: #5C4B42; --text-light: #A38B7C; --line: #F2DFCB;
+  --blue-soft: #F4ECDF; --mint-soft: #EAF3E6; --purple-soft: #F3ECF4; --yellow-soft: #FBF3DF;
+  --radius: 26px; --radius-sm: 18px; --radius-xs: 13px;
+  --shadow: 0 10px 30px rgba(244,184,144,.22); --shadow-hover: 0 16px 40px rgba(244,184,144,.32); --shadow-sm: 0 5px 18px rgba(244,184,144,.18);
+  --ico: #F4B890; --ico-w: 2.4; --ico-fill: none; --ico-cap: round; --ico-glow: none;
 }
-[data-style="cool"] body { background: radial-gradient(circle at 12% 15%, #1e2436, transparent 45%), radial-gradient(circle at 88% 85%, #241a30, transparent 45%), #16171d; }
-[data-style="cool"] .page-card, [data-style="cool"] .sidebar, [data-style="cool"] .mobile-bar, [data-style="cool"] .bottom-nav, [data-style="cool"] .sheet, [data-style="cool"] .checkin-card { backdrop-filter: blur(14px) saturate(1.2); -webkit-backdrop-filter: blur(14px) saturate(1.2); border: 1px solid rgba(255,255,255,.08); }
-[data-style="cool"] .btn-primary { box-shadow: 0 0 16px var(--pink); }
-[data-style="cool"] .nav-item.active, [data-style="cool"] .bn-item.active { text-shadow: 0 0 10px var(--pink); }
-[data-style="cool"] .bg-decor::before, [data-style="cool"] .bg-decor::after { opacity: .4; filter: blur(70px); }
-[data-style="cool"] #skin-pattern { opacity: 0 !important; }
+/* 4. 莫兰迪灰绿文艺风：低饱和纯色扁平、线条偏细、复古哑光 */
+[data-style="s4"] {
+  --cream: #F3F3F0; --cream-card: #DFE2E0; --pink: #98A999; --pink-soft: #D2DAD2; --pink-bg: #EAEEea;
+  --text: #4A504B; --text-light: #8A938C; --line: #D2D6D2;
+  --blue-soft: #DDE4E6; --mint-soft: #DDE6DD; --purple-soft: #E2DDE6; --yellow-soft: #E8E6D8;
+  --radius: 14px; --radius-sm: 10px; --radius-xs: 7px;
+  --shadow: 0 6px 20px rgba(120,130,120,.16); --shadow-hover: 0 10px 28px rgba(120,130,120,.24); --shadow-sm: 0 3px 12px rgba(120,130,120,.12);
+  --ico: #98A999; --ico-w: 1.6; --ico-fill: var(--ico); --ico-cap: round; --ico-glow: none;
+}
+/* 5. 马卡龙多巴胺风：彩色实心圆润、高饱和马卡龙、可爱卡通 */
+[data-style="s5"] {
+  --cream: #F7F2FF; --cream-card: #F1E9FF; --pink: #B688E8; --pink-soft: #EADCFB; --pink-bg: #F5EEFF;
+  --text: #4A3B5C; --text-light: #9986B0; --line: #E6DAF5;
+  --blue-soft: #E3F4FF; --mint-soft: #E6FFEF; --purple-soft: #EFE4FB; --yellow-soft: #FBF4DC;
+  --radius: 22px; --radius-sm: 16px; --radius-xs: 12px;
+  --shadow: 0 10px 30px rgba(182,136,232,.22); --shadow-hover: 0 16px 40px rgba(182,136,232,.32); --shadow-sm: 0 5px 18px rgba(182,136,232,.18);
+  --ico: #B688E8; --ico-w: 2.2; --ico-fill: var(--ico); --ico-cap: round; --ico-glow: none;
+}
+/* 6. 黑白高效极简风：纯黑线性、无任何色彩、利落干练 */
+[data-style="s6"] {
+  --cream: #FFFFFF; --cream-card: #F7F7F7; --pink: #333333; --pink-soft: #ECECEC; --pink-bg: #F2F2F2;
+  --text: #222222; --text-light: #777777; --line: #E6E6E6;
+  --blue-soft: #F0F0F0; --mint-soft: #F0F0F0; --purple-soft: #F0F0F0; --yellow-soft: #F0F0F0;
+  --radius: 8px; --radius-sm: 6px; --radius-xs: 4px;
+  --shadow: 0 2px 10px rgba(0,0,0,.06); --shadow-hover: 0 4px 16px rgba(0,0,0,.1); --shadow-sm: 0 1px 6px rgba(0,0,0,.05);
+  --ico: #222222; --ico-w: 1.8; --ico-fill: none; --ico-cap: square; --ico-glow: none;
+}
+/* 7. 原木日系手账风：手绘简笔、木质印章细线、棕褐、手写松弛 */
+[data-style="s7"] {
+  --cream: #FAF6F0; --cream-card: #F4EBDC; --pink: #B08968; --pink-soft: #ECE0CE; --pink-bg: #F6EFE4;
+  --text: #433520; --text-light: #927C63; --line: #E6DAC6;
+  --blue-soft: #E9EDEF; --mint-soft: #E9EFE6; --purple-soft: #EFECEF; --yellow-soft: #F4EFDF;
+  --radius: 14px; --radius-sm: 10px; --radius-xs: 7px;
+  --shadow: 0 6px 20px rgba(176,137,104,.16); --shadow-hover: 0 10px 28px rgba(176,137,104,.24); --shadow-sm: 0 3px 12px rgba(176,137,104,.12);
+  --ico: #B08968; --ico-w: 1.6; --ico-fill: none; --ico-cap: round; --ico-glow: none;
+}
+/* 8. 赛博霓虹未来风：霓虹描边发光、线条细、青蓝未来AI感 */
+[data-style="s8"] {
+  --cream: #0F172A; --cream-card: #1E293B; --pink: #22D3EE; --pink-soft: #163042; --pink-bg: #122236;
+  --text: #E2E8F0; --text-light: #7C8AA3; --line: #283549;
+  --blue-soft: #162c3d; --mint-soft: #14302c; --purple-soft: #241a3a; --yellow-soft: #2a2a18;
+  --radius: 12px; --radius-sm: 9px; --radius-xs: 6px;
+  --shadow: 0 8px 30px rgba(0,0,0,.55); --shadow-hover: 0 12px 40px rgba(0,0,0,.65); --shadow-sm: 0 4px 18px rgba(0,0,0,.5);
+  --ico: #22D3EE; --ico-w: 1.6; --ico-fill: none; --ico-cap: round; --ico-glow: drop-shadow(0 0 5px rgba(34,211,238,.85));
+}
+[data-style="s8"] body { background: radial-gradient(circle at 15% 12%, #14233b, transparent 45%), radial-gradient(circle at 85% 88%, #1a1230, transparent 45%), #0F172A; }
+[data-style="s8"] .page-card, [data-style="s8"] .sidebar, [data-style="s8"] .mobile-bar, [data-style="s8"] .bottom-nav, [data-style="s8"] .sheet, [data-style="s8"] .checkin-card { backdrop-filter: blur(12px) saturate(1.15); -webkit-backdrop-filter: blur(12px) saturate(1.15); border: 1px solid rgba(34,211,238,.14); }
+[data-style="s8"] .btn-primary { box-shadow: 0 0 18px rgba(34,211,238,.5); }
+[data-style="s8"] .nav-item.active, [data-style="s8"] .bn-item.active { text-shadow: 0 0 10px rgba(34,211,238,.7); }
+/* 9. 复古泛黄报纸风：复古印刷线条、深棕、仿旧油墨 */
+[data-style="s9"] {
+  --cream: #F8F5E6; --cream-card: #FFFFFC; --pink: #8B4513; --pink-soft: #F0E7D2; --pink-bg: #FBF7EC;
+  --text: #3A3A3A; --text-light: #8A7E6A; --line: #E3DCC4;
+  --blue-soft: #E8EEF2; --mint-soft: #E8F0E8; --purple-soft: #EEEBF2; --yellow-soft: #F4EFD8;
+  --radius: 4px; --radius-sm: 3px; --radius-xs: 3px;
+  --shadow: 0 3px 14px rgba(139,69,19,.12); --shadow-hover: 0 6px 20px rgba(139,69,19,.2); --shadow-sm: 0 2px 8px rgba(139,69,19,.1);
+  --ico: #8B4513; --ico-w: 1.8; --ico-fill: none; --ico-cap: square; --ico-glow: none;
+}
+/* 10. 海盐苏打冰爽风：浅蓝细线性、清爽干净、扁平无阴影 */
+[data-style="s10"] {
+  --cream: #F0F7FA; --cream-card: #E6F4F8; --pink: #489FB5; --pink-soft: #D6EBF1; --pink-bg: #EAF6FA;
+  --text: #2C3E50; --text-light: #6E8794; --line: #CFE6EE;
+  --blue-soft: #E3F2F8; --mint-soft: #E6F3EF; --purple-soft: #ECEAF6; --yellow-soft: #FAF4DE;
+  --radius: 18px; --radius-sm: 12px; --radius-xs: 9px;
+  --shadow: 0 6px 20px rgba(72,159,181,.14); --shadow-hover: 0 10px 28px rgba(72,159,181,.22); --shadow-sm: 0 3px 12px rgba(72,159,181,.1);
+  --ico: #489FB5; --ico-w: 1.6; --ico-fill: none; --ico-cap: round; --ico-glow: none;
+}
+/* 11. 焦糖美式复古风：复古美式粗线条、焦糖棕、复古贴纸 */
+[data-style="s11"] {
+  --cream: #FDF6E9; --cream-card: #F9E7CD; --pink: #A65C32; --pink-soft: #F2DEC2; --pink-bg: #FBF1E2;
+  --text: #4E342E; --text-light: #9A7260; --line: #EEDDC4;
+  --blue-soft: #E8EEF0; --mint-soft: #E9F0E6; --purple-soft: #F0ECEF; --yellow-soft: #F6EED8;
+  --radius: 16px; --radius-sm: 11px; --radius-xs: 8px;
+  --shadow: 0 7px 22px rgba(166,92,50,.18); --shadow-hover: 0 12px 30px rgba(166,92,50,.26); --shadow-sm: 0 3px 14px rgba(166,92,50,.14);
+  --ico: #A65C32; --ico-w: 2.4; --ico-fill: none; --ico-cap: round; --ico-glow: none;
+}
+/* 12. 清冷白茶素雅风：极细灰单色线性、几乎无存在感、低调 */
+[data-style="s12"] {
+  --cream: #F5F5F3; --cream-card: #FFFFFF; --pink: #B8C4BB; --pink-soft: #E9ECEA; --pink-bg: #F1F2F0;
+  --text: #383E3B; --text-light: #8C938E; --line: #E4E6E3;
+  --blue-soft: #EAEEF0; --mint-soft: #EBEFEA; --purple-soft: #EFEAEE; --yellow-soft: #F2F0E8;
+  --radius: 14px; --radius-sm: 10px; --radius-xs: 7px;
+  --shadow: 0 4px 16px rgba(120,130,120,.1); --shadow-hover: 0 8px 22px rgba(120,130,120,.16); --shadow-sm: 0 2px 10px rgba(120,130,120,.08);
+  --ico: #B8C4BB; --ico-w: 1.2; --ico-fill: none; --ico-cap: round; --ico-glow: none;
+}
+/* 13. 蜜桃奶冻甜妹风：粉色实心圆角软萌、胖乎乎卡通 */
+[data-style="s13"] {
+  --cream: #FFF7F7; --cream-card: #FFE8E8; --pink: #F29492; --pink-soft: #FBDADA; --pink-bg: #FFEFEF;
+  --text: #593E3E; --text-light: #A88383; --line: #F7DADA;
+  --blue-soft: #E9F0F4; --mint-soft: #E9F1E9; --purple-soft: #F2EAF2; --yellow-soft: #FBF1DF;
+  --radius: 26px; --radius-sm: 18px; --radius-xs: 13px;
+  --shadow: 0 10px 30px rgba(242,148,146,.24); --shadow-hover: 0 16px 40px rgba(242,148,146,.34); --shadow-sm: 0 5px 18px rgba(242,148,146,.2);
+  --ico: #F29492; --ico-w: 2.2; --ico-fill: var(--ico); --ico-cap: round; --ico-glow: none;
+}
+/* 14. 抹茶森系治愈风：植物扁平、抹茶绿、柔和自然 */
+[data-style="s14"] {
+  --cream: #F3F7EF; --cream-card: #E4EDD9; --pink: #7D9D70; --pink-soft: #D6E3CB; --pink-bg: #EDF2E6;
+  --text: #3D4A36; --text-light: #7C8A72; --line: #D5E0CB;
+  --blue-soft: #E6EEF2; --mint-soft: #E4EEE2; --purple-soft: #ECEAF2; --yellow-soft: #F3F0DE;
+  --radius: 18px; --radius-sm: 12px; --radius-xs: 9px;
+  --shadow: 0 8px 24px rgba(125,157,112,.18); --shadow-hover: 0 12px 32px rgba(125,157,112,.26); --shadow-sm: 0 4px 14px rgba(125,157,112,.14);
+  --ico: #7D9D70; --ico-w: 2; --ico-fill: var(--ico); --ico-cap: round; --ico-glow: none;
+}
+/* 15. 宣纸国风素雅风：水墨线条、暗红印章、古风简约 */
+[data-style="s15"] {
+  --cream: #F7F3E9; --cream-card: #FFFCF6; --pink: #8C3A3A; --pink-soft: #F1E4DC; --pink-bg: #FBF4EC;
+  --text: #333333; --text-light: #8A8076; --line: #E8E0D0;
+  --blue-soft: #E9EEF0; --mint-soft: #E9F0EA; --purple-soft: #EFEAF0; --yellow-soft: #F5EFDD;
+  --radius: 6px; --radius-sm: 4px; --radius-xs: 4px;
+  --shadow: 0 4px 16px rgba(140,58,58,.12); --shadow-hover: 0 8px 22px rgba(140,58,58,.2); --shadow-sm: 0 2px 10px rgba(140,58,58,.1);
+  --ico: #8C3A3A; --ico-w: 1.6; --ico-fill: none; --ico-cap: square; --ico-glow: none;
+}
 
 /* ── 右上角皮肤切换悬浮按钮（三端常驻）── */
 .skin-fab {
@@ -596,9 +702,13 @@ body {
 .pair-code-row .input { flex: 1; min-width: 0; }
 .pair-code { flex: 1; min-width: 0; font-size: 12.5px; font-weight: 800; color: var(--pink); background: var(--pink-bg); border: 1px solid var(--line); border-radius: var(--radius-xs); padding: 8px 10px; word-break: break-all; letter-spacing: .5px; }
 .pair-hint { font-size: 11px; color: var(--text-light); margin-top: 8px; line-height: 1.6; }
-.style-row { display: flex; gap: 8px; flex-wrap: wrap; }
-.style-chip { border: 2px solid transparent; background: var(--cream); border-radius: 20px; padding: 7px 14px; font-size: 13px; font-weight: 800; cursor: pointer; transition: all .2s; }
+.style-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; max-height: 64vh; overflow-y: auto; padding: 2px; }
+.style-chip { display: flex; align-items: center; gap: 9px; border: 2px solid transparent; background: var(--cream); border-radius: 14px; padding: 9px 11px; font-size: 12.5px; font-weight: 800; color: var(--text); cursor: pointer; transition: all .2s; text-align: left; }
+.style-chip:hover { transform: translateY(-1px); }
 .style-chip.active { border-color: var(--pink); background: var(--pink-soft); }
+.style-chip .sc-preview { display: inline-flex; gap: 2px; flex: none; }
+.style-chip .sc-preview i { width: 11px; height: 11px; border-radius: 3px; display: inline-block; border: 1px solid rgba(0,0,0,.1); }
+.style-chip .sc-name { line-height: 1.2; }
 /* ── 旅行计划 ── */
 .travel-total { font-size: 13px; color: var(--text-light); margin: 10px 0; }
 .travel-card { background: var(--cream); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 14px; margin-bottom: 12px; box-shadow: var(--shadow-sm); }
@@ -828,13 +938,13 @@ body {
   <div class="bg-decor"></div>
   <div id="skin-pattern"></div>
 
-  <button class="skin-fab" id="skin-fab" title="切换皮肤（颜色 + 风格）">🎨</button>
+  <button class="skin-fab" id="skin-fab" title="切换工作台风格（配色 + 图标）"></button>
 
   <div class="mobile-bar">
     <span class="mb-avatar">💛</span>
     <span class="mb-title">米米 Daily</span>
-    <button class="mb-settings" id="mb-settings" title="设置">⚙️</button>
-    <button class="mb-theme" id="mb-theme" title="切换主题">🎨</button>
+    <button class="mb-settings" id="mb-settings" title="设置"></button>
+    <button class="mb-theme" id="mb-theme" title="切换工作台风格"></button>
     <span class="mb-date" id="mb-date"></span>
   </div>
 
@@ -847,8 +957,7 @@ body {
       </div>
       <ul class="nav-menu" id="nav-menu"></ul>
       <div class="sidebar-footer"><span>💛</span><span>🌸</span><span>🍃</span></div>
-      <div class="theme-picker" id="theme-picker"></div>
-      <button class="sidebar-settings" id="sidebar-settings">⚙️ 设置</button>
+      <button class="sidebar-settings" id="sidebar-settings"></button>
     </nav>
 
     <main class="main">
@@ -859,11 +968,10 @@ body {
   <nav class="bottom-nav" id="bottom-nav"><div class="bn-inner" id="bn-inner"></div></nav>
 
   <div class="sheet-mask" id="sheet-mask"></div>
-  <div class="sheet" id="theme-sheet">
-    <div class="sheet-title">🎨 选择一个主题色</div>
-    <div class="sheet-dots" id="sheet-dots"></div>
-    <div class="sheet-sub" style="margin-top:14px;">✨ 皮肤风格</div>
-    <div class="style-row" id="style-row"></div>
+  <div class="sheet sheet-wide" id="theme-sheet">
+    <div class="sheet-title">🎨 工作台风格</div>
+    <div class="sheet-sub">15 套完整风格 · 配色 + 图标风格，点一下即可切换</div>
+    <div class="style-grid" id="style-row"></div>
   </div>
 
   <div class="sheet-mask" id="settings-mask"></div>
@@ -1289,42 +1397,6 @@ function getModules() {
 function saveModules(mods) { lsSet(LS.modules, mods); }
 // 当前可见模块（按 order 排序）
 function visibleModules() { return getModules().filter(m => m.visible); }
-const THEMES = [
-  { key: 'default', color: '#E8B4B8', name: '蜜桃粉' },
-  { key: 'rose', color: '#D4778A', name: '玫瑰红' },
-  { key: 'coral', color: '#E89B7A', name: '珊瑚橘' },
-  { key: 'orange', color: '#F0B870', name: '暖阳橙' },
-  { key: 'yellow', color: '#E8D05A', name: '奶酪黄' },
-  { key: 'olive', color: '#A8C078', name: '抹茶绿' },
-  { key: 'mint', color: '#7CCBA5', name: '薄荷青' },
-  { key: 'teal', color: '#5DB8AE', name: '湖水蓝' },
-  { key: 'blue', color: '#7EB8D4', name: '天空蓝' },
-  { key: 'indigo', color: '#8B9AD4', name: '靛青蓝' },
-  { key: 'purple', color: '#B8A0D4', name: '薰衣紫' },
-  { key: 'magenta', color: '#D488B8', name: '桃花红' },
-  { key: 'dark', color: '#2A2A2E', name: '暗夜黑' },
-  { key: 'peach', color: '#E8A98B', name: '蜜桃橘' },
-  { key: 'sakura', color: '#F2A8BC', name: '樱花粉', pat: 'hearts', patOpacity: 0.55 },
-  { key: 'honey', color: '#F0B070', name: '蜜橘橘', pat: 'dots', patOpacity: 0.5 },
-  { key: 'sky', color: '#8FC0E0', name: '天空蓝', pat: 'clouds', patOpacity: 0.5 },
-  { key: 'mintc', color: '#7CCBA5', name: '薄荷绿', pat: 'dots', patOpacity: 0.5 },
-  { key: 'berry', color: '#D488B8', name: '草莓红', pat: 'gingham', patOpacity: 0.5 },
-  { key: 'grape', color: '#B49CE0', name: '葡萄紫', pat: 'stars', patOpacity: 0.55 },
-  { key: 'butter', color: '#E8C95A', name: '奶油黄', pat: 'gingham', patOpacity: 0.5 },
-  { key: 'milktea', color: '#C9A87C', name: '奶茶棕', pat: 'dots', patOpacity: 0.5 },
-  { key: 'lilac', color: '#C9A8E0', name: '丁香紫', pat: 'hearts', patOpacity: 0.5 },
-];
-
-/* ── 背景花纹（清新可爱皮肤）── */
-function _svgBg(svg) { return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`; }
-const PATTERNS = {
-  hearts: (c) => _svgBg(`<svg xmlns='http://www.w3.org/2000/svg' width='26' height='26'><path d='M13 22s-8-5.2-8-11C5 8.2 7 6 9.4 6c1.9 0 3.1 1.1 3.6 2.1C13.5 7.1 14.7 6 16.6 6 19 6 21 8.2 21 11c0 5.8-8 11-8 11z' fill='${c}' opacity='0.5'/></svg>`),
-  dots: (c) => `radial-gradient(${c} 2.4px, transparent 2.8px) 0 0 / 18px 18px, radial-gradient(${c} 1.8px, transparent 2.2px) 9px 9px / 18px 18px`,
-  stars: (c) => _svgBg(`<svg xmlns='http://www.w3.org/2000/svg' width='28' height='28'><path d='M14 4l1.8 5.7L21 11l-5.2 1.3L14 18l-1.8-5.7L7 11l5.2-1.3z' fill='${c}' opacity='0.55'/></svg>`),
-  clouds: (c) => _svgBg(`<svg xmlns='http://www.w3.org/2000/svg' width='42' height='28'><path d='M11 21a5 5 0 0 1 .6-9.96A6 6 0 0 1 22 11.5 4 4 0 0 1 21.5 21z' fill='${c}' opacity='0.45'/></svg>`),
-  gingham: (c) => `repeating-linear-gradient(45deg, ${c}33 0 9px, transparent 9px 18px), repeating-linear-gradient(-45deg, ${c}33 0 9px, transparent 9px 18px)`,
-};
-
 const ZODIAC = [
   { en: 'aries', zh: '白羊座', em: '🐏' },
   { en: 'taurus', zh: '金牛座', em: '🐂' },
@@ -1347,6 +1419,44 @@ function toast(m) {
 }
 function esc(s) { return (s == null ? '' : String(s)).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 function fmtMD(iso) { try { return iso.slice(5).replace('-', '/'); } catch { return iso; } }
+/* ── 内联 SVG 图标库（24x24，stroke 取 currentColor，由 .app-ico 着色）── */
+const ICONS = {
+  home: '<path d="M4 12l8-7 8 7"/><path d="M6 11v8h12v-8"/><path d="M10 19v-5h4v5"/>',
+  scale: '<path d="M12 3v18"/><path d="M5 7h14"/><path d="M5 7l-2.5 6a3 3 0 0 0 5 0z"/><path d="M19 7l-2.5 6a3 3 0 0 0 5 0z"/><circle cx="12" cy="4.6" r="1.3"/>',
+  gift: '<rect x="3" y="8" width="18" height="12" rx="1.5"/><path d="M3 12h18"/><path d="M12 8v12"/><path d="M12 8C12 5.5 9.5 5 8.5 6.2 7.5 7.4 10 8 12 8z"/><path d="M12 8c0-2.5 2.5-3 3.5-1.8C16.5 7.4 14 8 12 8z"/>',
+  tv: '<rect x="3" y="5" width="18" height="12" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/>',
+  star: '<path d="M12 3l2.5 5.3 5.6.8-4.1 4 1 5.7L12 16.9 6.9 19.1l1-5.7-4.1-4 5.6-.8z"/>',
+  pen: '<path d="M4 20l4-1 10-10-3-3L5 16z"/><path d="M14 6l3 3"/>',
+  heart: '<path d="M12 20.5S4.5 16 3 11.2C2 7.8 4.3 5 7 5c2 0 4 1.5 5 3 1-1.5 3-3 5-3 2.7 0 5 2.8 4 6.2C19.5 16 12 20.5 12 20.5z"/>',
+  plane: '<path d="M21 3L3 11l7 2 2 7z"/><path d="M21 3L14 10"/>',
+  checksq: '<rect x="4" y="4" width="16" height="16" rx="2.5"/><path d="M8 12l3 3 5-6"/>',
+  sun: '<circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5 5l1.8 1.8M17.2 17.2 19 19M19 5l-1.8 1.8M6.8 17.2 5 19"/>',
+  gear: '<circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5 5l2.1 2.1M16.9 16.9 19 19M19 5l-2.1 2.1M7.1 16.9 5 19"/>',
+  x: '<path d="M6 6l12 12M18 6 6 18"/>',
+  copy: '<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M4 16V5a1 1 0 0 1 1-1h11"/>',
+  download: '<path d="M12 3v11M7 10l5 5 5-5"/><path d="M4 20h16"/>',
+  upload: '<path d="M12 21V10M7 14l5-5 5 5"/><path d="M4 4h16"/>',
+  link: '<path d="M9 15l6-6"/><path d="M11 7l1-1a4 4 0 0 1 6 6l-1 1"/><path d="M13 17l-1 1a4 4 0 0 1-6-6l1-1"/>',
+  cloud: '<path d="M7 18a4 4 0 0 1 0-8 5 5 0 0 1 9.6-1A3.5 3.5 0 0 1 17 18z"/>',
+  palette: '<path d="M12 3a9 9 0 1 0 0 18c1.5 0 2-1 2-2s-1-1.5-1-3 1.5-2 3-2h1a3 3 0 0 0 3-3c0-5-4-8-9-8z"/><circle cx="8" cy="11" r="1.1"/><circle cx="12" cy="8" r="1.1"/><circle cx="16" cy="11" r="1.1"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  edit: '<path d="M4 20l4-1 10-10-3-3L5 16z"/><path d="M14 6l3 3"/>',
+  trash: '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>',
+  search: '<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4-4"/>',
+  check: '<path d="M5 12l5 5 9-11"/>',
+  calendar: '<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 9h16M8 3v4M16 3v4"/>',
+  refresh: '<path d="M20 11a8 8 0 0 0-14-5l-1 1"/><path d="M4 5v4h4"/><path d="M4 13a8 8 0 0 0 14 5l1-1"/><path d="M20 19v-4h-4"/>',
+  menu: '<path d="M4 7h16M4 12h16M4 17h16"/>'
+};
+/* 模块 key → 图标名 */
+const MODULE_ICON = {
+  briefing: 'home', weight: 'scale', anniv: 'gift', shows: 'tv', reviews: 'star',
+  notes: 'pen', mood: 'heart', travel: 'plane', todos: 'checksq', fortune: 'sun'
+};
+function icon(name, cls) {
+  const p = ICONS[name] || ICONS.star;
+  return '<svg class="app-ico ' + (cls || '') + '" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' + p + '</svg>';
+}
 function todayISO() { return new Date().toISOString().slice(0, 10); }
 /* 取 YYYY-MM 并格式化为「2026年7月」 */
 function monthOf(dateStr) {
@@ -1459,50 +1569,56 @@ const calCache = {};
 function buildNav() {
   const mods = visibleModules();
   document.getElementById('nav-menu').innerHTML = mods.map(n =>
-    `<li class="nav-item" data-page="${n.key}"><span class="nav-icon">${n.icon}</span><span class="nav-text">${n.label}</span></li>`).join('');
+    `<li class="nav-item" data-page="${n.key}"><span class="nav-icon">${icon(MODULE_ICON[n.key] || 'star')}</span><span class="nav-text">${n.label}</span></li>`).join('');
   document.getElementById('bn-inner').innerHTML = mods.map(n =>
-    `<div class="bn-item" data-page="${n.key}"><span class="bn-icon">${n.icon}</span><span class="bn-text">${n.label}</span></div>`).join('');
+    `<div class="bn-item" data-page="${n.key}"><span class="bn-icon">${icon(MODULE_ICON[n.key] || 'star')}</span><span class="bn-text">${n.label}</span></div>`).join('');
   document.querySelectorAll('.nav-item').forEach(i => i.addEventListener('click', () => switchPage(i.dataset.page)));
   document.querySelectorAll('.bn-item').forEach(i => i.addEventListener('click', () => switchPage(i.dataset.page)));
 }
 function buildThemes() {
-  document.getElementById('theme-picker').innerHTML = THEMES.map(t =>
-    `<div class="theme-dot" data-theme="${t.key}" style="background:${t.color}" title="${t.name}"></div>`).join('');
-  document.getElementById('sheet-dots').innerHTML = THEMES.map(t =>
-    `<div class="sheet-dot" data-theme="${t.key}" style="background:${t.color}"><span class="sd-name">${t.name}</span></div>`).join('');
-  document.querySelectorAll('.theme-dot, .sheet-dot').forEach(d =>
-    d.addEventListener('click', () => setTheme(d.dataset.theme)));
+  // 15 套完整风格（配色 + 图标风格）由 buildStyles 渲染，不再单独暴露颜色主题
   buildStyles();
 }
 
-/* ── 皮肤风格（颜色之外的整体风格：默认/简约/可爱/炫酷）── */
+/* ── 15 套工作台完整风格（配色 + 图标风格，通过 data-style 切换）── */
 const STYLES = [
-  { key: 'default', name: '元气', em: '💛' },
-  { key: 'minimal', name: '简约', em: '🤍' },
-  { key: 'cute', name: '可爱', em: '🎀' },
-  { key: 'cool', name: '炫酷', em: '⚡' }
+  { key: 's1', name: '清新蓝绿极简', bg: '#D0E8F2', card: '#EDF6FB', accent: '#81C3D7' },
+  { key: 's2', name: '暗黑科技商务', bg: '#161b22', card: '#21262d', accent: '#58a6ff' },
+  { key: 's3', name: '奶油INS暖杏', bg: '#FFF9F2', card: '#FFEFE0', accent: '#F4B890' },
+  { key: 's4', name: '莫兰迪灰绿文艺', bg: '#F3F3F0', card: '#DFE2E0', accent: '#98A999' },
+  { key: 's5', name: '马卡龙多巴胺', bg: '#F7F2FF', card: '#F1E9FF', accent: '#B688E8' },
+  { key: 's6', name: '黑白高效极简', bg: '#FFFFFF', card: '#F7F7F7', accent: '#333333' },
+  { key: 's7', name: '原木日系手账', bg: '#FAF6F0', card: '#F4EBDC', accent: '#B08968' },
+  { key: 's8', name: '赛博霓虹未来', bg: '#0F172A', card: '#1E293B', accent: '#22D3EE' },
+  { key: 's9', name: '复古泛黄报纸', bg: '#F8F5E6', card: '#FFFFFC', accent: '#8B4513' },
+  { key: 's10', name: '海盐苏打冰爽', bg: '#F0F7FA', card: '#E6F4F8', accent: '#489FB5' },
+  { key: 's11', name: '焦糖美式复古', bg: '#FDF6E9', card: '#F9E7CD', accent: '#A65C32' },
+  { key: 's12', name: '清冷白茶素雅', bg: '#F5F5F3', card: '#FFFFFF', accent: '#B8C4BB' },
+  { key: 's13', name: '蜜桃奶冻甜妹', bg: '#FFF7F7', card: '#FFE8E8', accent: '#F29492' },
+  { key: 's14', name: '抹茶森系治愈', bg: '#F3F7EF', card: '#E4EDD9', accent: '#7D9D70' },
+  { key: 's15', name: '宣纸国风素雅', bg: '#F7F3E9', card: '#FFFCF6', accent: '#8C3A3A' }
 ];
-function getStyle() { return localStorage.getItem(LS.style) || 'default'; }
+function getStyle() { return localStorage.getItem(LS.style) || 's1'; }
 function buildStyles() {
   const row = document.getElementById('style-row');
   if (!row) return;
   const cur = getStyle();
   row.innerHTML = STYLES.map(s =>
-    `<button class="style-chip ${s.key === cur ? 'active' : ''}" data-style="${s.key}">${s.em} ${s.name}</button>`).join('');
+    `<button class="style-chip ${s.key === cur ? 'active' : ''}" data-style="${s.key}">
+       <span class="sc-preview"><i style="background:${s.bg}"></i><i style="background:${s.card}"></i><i style="background:${s.accent}"></i></span>
+       <span class="sc-name">${s.name}</span>
+     </button>`).join('');
   row.querySelectorAll('.style-chip').forEach(c => c.onclick = () => setStyle(c.dataset.style));
 }
 function setStyle(style) {
-  if (style === 'default') document.documentElement.removeAttribute('data-style');
-  else document.documentElement.setAttribute('data-style', style);
+  document.documentElement.setAttribute('data-style', style);
   localStorage.setItem(LS.style, style);
   document.querySelectorAll('.style-chip').forEach(c => c.classList.toggle('active', c.dataset.style === style));
   const s = STYLES.find(x => x.key === style);
-  toast('✨ 已切换「' + (s ? s.name : '元气') + '」风格');
+  toast('✨ 已切换「' + (s ? s.name : '风格') + '」');
 }
 function applyStyle() {
-  const style = getStyle();
-  if (style === 'default') document.documentElement.removeAttribute('data-style');
-  else document.documentElement.setAttribute('data-style', style);
+  document.documentElement.setAttribute('data-style', getStyle());
 }
 
 /* ── 模块自定义（显隐/排序/改名）── */
@@ -1522,7 +1638,7 @@ function renderModuleSettings() {
     <li class="mod-item" draggable="true" data-key="${m.key}">
       <span class="mod-handle">☰</span>
       <input type="checkbox" class="mod-vis" data-key="${m.key}" ${m.visible ? 'checked' : ''} />
-      <span class="mod-icon">${m.icon}</span>
+      <span class="mod-icon">${icon(MODULE_ICON[m.key] || 'star')}</span>
       <input class="input mod-label" data-key="${m.key}" value="${esc(m.label)}" maxlength="8" />
       <button class="mod-up" data-key="${m.key}" ${i === 0 ? 'disabled' : ''}>▲</button>
       <button class="mod-down" data-key="${m.key}" ${i === mods.length - 1 ? 'disabled' : ''}>▼</button>
@@ -1695,26 +1811,6 @@ lsSet = function (k, v) {
   if (_suppressPush) return; // 拉取远程数据回填时不要再推回去
   schedulePush();
 };
-function applyPattern(themeKey) {
-  const sp = document.getElementById('skin-pattern');
-  if (!sp) return;
-  const t = THEMES.find(x => x.key === themeKey);
-  if (t && t.pat && PATTERNS[t.pat]) {
-    sp.style.backgroundImage = PATTERNS[t.pat](t.color);
-    sp.style.opacity = (t.patOpacity != null ? t.patOpacity : 0.6);
-  } else {
-    sp.style.backgroundImage = 'none';
-    sp.style.opacity = 0;
-  }
-}
-function setTheme(theme) {
-  if (theme === 'default') document.documentElement.removeAttribute('data-theme');
-  else document.documentElement.setAttribute('data-theme', theme);
-  localStorage.setItem('mimi-theme', theme);
-  document.querySelectorAll('.theme-dot, .sheet-dot').forEach(d => d.classList.toggle('active', d.dataset.theme === theme));
-  applyPattern(theme);
-  toast('🎨 主题已切换');
-}
 function buildZodiac() {
   const wrap = document.getElementById('zodiac-dots');
   if (!wrap) return;
@@ -1761,11 +1857,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const loading = document.getElementById('app-loading');
   if (loading) { loading.classList.add('hidden'); setTimeout(() => loading.remove(), 400); }
   buildNav(); buildThemes();
-  // 恢复主题高亮
-  const saved = localStorage.getItem('mimi-theme') || 'default';
-  document.querySelectorAll('.theme-dot, .sheet-dot').forEach(d => d.classList.toggle('active', d.dataset.theme === saved));
-  applyPattern(saved);
   applyStyle();
+  // 注入 SVG 图标到悬浮按钮与设置入口（图标风格随完整风格变化）
+  const fab = document.getElementById('skin-fab'); if (fab) fab.innerHTML = icon('palette');
+  const mbT = document.getElementById('mb-theme'); if (mbT) mbT.innerHTML = icon('palette');
+  const mbSettings = document.getElementById('mb-settings'); if (mbSettings) mbSettings.innerHTML = icon('gear');
+  const sbSettings = document.getElementById('sidebar-settings'); if (sbSettings) sbSettings.innerHTML = icon('gear') + ' 设置';
+  // 设置面板操作按钮加 SVG 图标
+  const actIcons = { 'sync-now': 'cloud', 'sid-copy': 'copy', 'pair-bind': 'link', 'data-export': 'download', 'data-import-btn': 'upload', 'mod-reset': 'refresh' };
+  const actLabels = { 'sync-now': '立即同步', 'sid-copy': '复制', 'pair-bind': '绑定', 'data-export': '导出数据', 'data-import-btn': '导入数据', 'mod-reset': '恢复默认顺序' };
+  Object.keys(actIcons).forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = '<span class="btn-ico">' + icon(actIcons[id]) + '</span>' + (actLabels[id] || ''); });
   // 主题面板：顶部栏 🎨（手机端）与弹层
   const openSheet = () => {
     document.getElementById('sheet-mask').classList.add('open');
